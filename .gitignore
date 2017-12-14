@@ -1,0 +1,8 @@
+.idea/
+resources/
+others/
+**/*/__pycache__
+**/*.logs
+**/*.log
+**/*.py[co]
+
