@@ -67,6 +67,8 @@ class StateTracker(object):
                 self.state["current_slots"]['inform_slots'][slot] = user_action["inform_slots"][slot]
             if slot in self.state["current_slots"]["agent_request_slots"].keys():
                 self.state["current_slots"]["agent_request_slots"].pop(slot)
+
+        # TODO (Qianlong): explicit_inform_slots and implicit_inform_slots are handled differently.
         # Explicit_inform_slots.
         for slot in user_action["explicit_inform_slots"].keys():
             if slot in self.user.goal["goal"]["request_slots"].keys():
@@ -108,6 +110,7 @@ class StateTracker(object):
             if slot in self.state["current_slots"]["user_request_slots"].keys():
                 self.state["current_slots"]["user_request_slots"].pop(slot)
 
+        # TODO (Qianlong): explicit_inform_slots and implicit_inform_slots are handled differently.
         # Explicit_inform_slots.
         for slot in agent_action["explicit_inform_slots"].keys():
             # The slot is come from user's goal["request_slots"]

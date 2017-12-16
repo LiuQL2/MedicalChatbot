@@ -72,9 +72,13 @@ class User(object):
         self.state["request_slots"]["disease"] = dialogue_configuration.VALUE_UNKNOWN
 
         for slot in goal["explicit_inform_slots"].keys():
-            self.state["explicit_inform_slots"][slot] = goal["explicit_inform_slots"][slot]
+            # self.state["explicit_inform_slots"][slot] = goal["explicit_inform_slots"][slot]
+            self.state["inform_slots"][slot] = goal["explicit_inform_slots"][slot]
         for slot in goal["implicit_inform_slots"].keys():
             self.state["rest_slots"][slot] = "implicit_inform_slots" # Remember where the rest slot comes from.
+        for slot in goal["explicit_inform_slots"].keys():
+            if slot not in self.state["request_slots"].keys():
+                self.state["rest_slots"][slot] = "explicit_inform_slots"
         for slot in goal["request_slots"].keys():
             if slot not in self.state["request_slots"].keys():
                 self.state["rest_slots"][slot] = "request_slots"
@@ -123,21 +127,27 @@ class User(object):
         else:
             pass
 
+
         # Response according to different action type.
         if agent_act_type == dialogue_configuration.CLOSE_DIALOGUE:
             self._response_closing(agent_action=agent_action)
         elif agent_act_type == "request":
-            self._response_request(agent_action=agent_action)
+            self._response_request_same(agent_action=agent_action) # explicit/implicit_inform_slots are handled in the same way.
+            # self._response_request_different(agent_action=agent_action) # explicit/implicit_inform_slots are handled differently.
         elif agent_act_type == dialogue_configuration.THANKS:
             self._response_thanks(agent_action=agent_action)
         elif agent_act_type == "confirm_answer":
-            self._response_confirm_answer(agent_action=agent_action)
+            self._response_confirm_answer_same(agent_action=agent_action) # Explicit/implicit_inform_slots are handled in the same way.
+            # self._response_confirm_answer_different(agent_action=agent_action) # Explicit/implicit_inform_slots are handled differently.
         elif agent_act_type == "inform":
-            self._response_inform(agent_action=agent_action)
+            self._response_inform_same(agent_action=agent_action) # Explicit/implicit_inform_slots are handled in the same way.
+            # self._response_inform_different(agent_action=agent_action) # Explicit/implicit_inform_slots are handled differently.
         elif agent_act_type == "explicit_inform":
-            self._response_inform(agent_action=agent_action)
+            self._response_inform_same(agent_action=agent_action) # Explicit/implicit_inform_slots are handled in the same way.
+            # self._response_inform_different(agent_action=agent_action) # Explicit/implicit_inform_slots are handled differently.
         elif agent_act_type == "implicit_inform":
-            self._response_inform(agent_action=agent_action)
+            self._response_inform_same(agent_action=agent_action) # Explicit/implicit_inform_slots are handled in the same way.
+            # self._response_inform_different(agent_action=agent_action) # Explicit/implicit_inform_slots are handled differently.
         user_action = self._assemble_user_action()
         return user_action, self.episode_over, self.dialogue_status
 
@@ -145,10 +155,109 @@ class User(object):
         self.state["action"] = dialogue_configuration.THANKS
         self.episode_over = True
 
+
+    #############################################
+    # Response for request where explicit_inform_slots and implicit_slots are handled in the same way.
+    ##############################################
+    def _response_request_same(self, agent_action):
+        """
+        The user informs slot must be one of implicit_inform_slots, because the explicit_inform_slots are all informed
+        at beginning.
+        # It would be easy at first whose job is to answer the implicit slot requested by agent.
+        :param agent_action:
+        :return:
+        """
+        # TODO (Qianlong): response to request action.
+        if len(agent_action["request_slots"].keys()) > 0:
+            for slot in agent_action["request_slots"].keys():
+                # The requested slots are come from explicit_inform_slots.
+                if slot in self.goal["goal"]["explicit_inform_slots"].keys():
+                    self.state["action"] = "inform"
+                    self.state["inform_slots"][slot] = self.goal["goal"]["explicit_inform_slots"][slot]
+                    if slot in self.state["rest_slots"].keys(): self.state["rest_slots"].pop(slot)
+                elif slot in self.goal["goal"]["implicit_inform_slots"].keys():
+                    self.state["action"] = "inform"
+                    self.state["inform_slots"][slot] = self.goal["goal"]["implicit_inform_slots"][slot]
+                    if slot in self.state["rest_slots"].keys(): self.state["rest_slots"].pop(slot)
+                else:
+                    if len(self.state["request_slots"].keys()) == 0 and len(self.state["rest_slots"].keys()) == 0:
+                        self.state["action"] = dialogue_configuration.THANKS
+                    else:
+                        self.state["action"] = "not_sure"
+                        self.state["inform_slots"][slot] = dialogue_configuration.I_DO_NOT_KNOW
+
+        # The case where the agent action type is request, but nothing in agent request_slots, which should not appear.
+        # A randomized slot will be chosen to inform agent if the rest_slots is not empty.
+        else:
+            if len(self.state["rest_slots"].keys()) > 0:
+                slot = random.choice(self.state["rest_slots"].keys())
+                if slot in self.goal["goal"]["explicit_inform_slots"].keys():# The case should not appear.
+                    self.state["action"] = "inform"
+                    self.state["inform_slots"][slot] = self.goal["goal"]["explicit_inform_slots"][slot]
+                    if slot in self.state["rest_slots"].keys(): self.state["rest_slots"].pop(slot)
+                elif slot in self.goal["goal"]["implicit_inform_slots"].keys():
+                    self.state["action"] = "inform"
+                    self.state["inform_slots"][slot] = self.goal["goal"]["implicit_inform_slots"][slot]
+                    if slot in self.state["rest_slots"].keys(): self.state["rest_slots"].pop(slot)
+                else:
+                    self.state["action"] = "not_sure"
+                    self.state["inform_slots"] = dialogue_configuration.I_DO_NOT_KNOW
+            else:
+                self.state["action"] = dialogue_configuration.THANKS
+
+    #############################################
+    # Response for request where explicit_inform_slots and implicit_inform_slots are handled differently.
+    #############################################
+    def _response_request_different(self, agent_action):
+        """
+        The user informs slot must be one of implicit_inform_slots, because the explicit_inform_slots are all informed
+        at beginning.
+        # It would be easy at first whose job is to answer the implicit slot requested by agent.
+        :param agent_action:
+        :return:
+        """
+        # TODO (Qianlong): response to request action.
+        if len(agent_action["request_slots"].keys()) > 0:
+            for slot in agent_action["request_slots"].keys():
+                # The requested slots are
+                if slot in self.goal["goal"]["explicit_inform_slots"].keys():
+                    self.state["action"] = "explicit_inform"
+                    self.state["explicit_inform_slots"][slot] = self.goal["goal"]["explicit_inform_slots"][slot]
+                    if slot in self.state["rest_slots"].keys(): self.state["rest_slots"].pop(slot)
+                elif slot in self.goal["goal"]["implicit_inform_slots"].keys():
+                    self.state["action"] = "implicit_inform"
+                    self.state["implicit_inform_slots"][slot] = self.goal["goal"]["implicit_inform_slots"][slot]
+                    if slot in self.state["rest_slots"].keys(): self.state["rest_slots"].pop(slot)
+                else:
+                    if len(self.state["request_slots"].keys()) == 0 and len(self.state["rest_slots"].keys()) == 0:
+                        self.state["action"] = dialogue_configuration.THANKS
+                    else:
+                        self.state["action"] = "not_sure"
+                        self.state["implicit_inform_slots"][slot] = dialogue_configuration.I_DO_NOT_KNOW
+
+        # The case where the agent action type is request, but nothing in agent request_slots, which should not appear.
+        # A randomized slot will be chosen to inform if the rest_slots is not empty.
+        else:
+            if len(self.state["rest_slots"].keys()) > 0:
+                slot = random.choice(self.state["rest_slots"].keys())
+                if slot in self.goal["goal"]["explicit_inform_slots"].keys():  # The case should not appear.
+                    self.state["action"] = "explicit_inform"
+                    self.state["explicit_inform_slots"][slot] = self.goal["goal"]["explicit_inform_slots"][slot]
+                    if slot in self.state["rest_slots"].keys(): self.state["rest_slots"].pop(slot)
+                elif slot in self.goal["goal"]["implicit_inform_slots"].keys():
+                    self.state["action"] = "implicit_inform"
+                    self.state["implicit_inform_slots"][slot] = self.goal["goal"]["implicit_inform_slots"][slot]
+                    if slot in self.state["rest_slots"].keys(): self.state["rest_slots"].pop(slot)
+                else:
+                    self.state["action"] = "not_sure"
+                    self.state["inform_slots"] = dialogue_configuration.I_DO_NOT_KNOW
+            else:
+                self.state["action"] = dialogue_configuration.THANKS
+
     #############################################
     # This may be useful in future. It will be easy at first.
     #############################################
-    def _response_request2(self, agent_action):
+    def _response_request3(self, agent_action):
         """
         对agent的request做出回复，首先利用agent里面的request slot在user goal里面的inform_slots进行寻找答案，能找到的就返回，不能找
         的就设置为不知道，
@@ -231,53 +340,31 @@ class User(object):
             else:
                 self.state["action"] = dialogue_configuration.THANKS
 
-    def _response_request(self, agent_action):
-        """
-        The user informs slot must be one of implicit_inform_slots, because the explicit_inform_slots are all informed
-        at beginning.
-        # It would be easy at first whose job is to answer the implicit slot requested by agent.
-        :param agent_action:
-        :return:
-        """
-        # TODO (Qianlong): response to request action.
-        if len(agent_action["request_slots"].keys()) > 0:
-            for slot in agent_action["request_slots"].keys():
-                # The requested slots are
-                if slot in self.goal["goal"]["explicit_inform_slots"].keys():
-                    self.state["action"] = "explicit_inform"
-                    self.state["explicit_inform_slots"][slot] = self.goal["goal"]["explicit_inform_slots"][slot]
-                    if slot in self.state["rest_slots"].keys(): self.state["rest_slots"].pop(slot)
-                elif slot in self.goal["goal"]["implicit_inform_slots"].keys():
-                    self.state["action"] = "implicit_inform"
-                    self.state["implicit_inform_slots"][slot] = self.goal["goal"]["implicit_inform_slots"][slot]
-                    if slot in self.state["rest_slots"].keys(): self.state["rest_slots"].pop(slot)
-                else:
-                    if len(self.state["request_slots"].keys()) == 0 and len(self.state["rest_slots"].keys()) == 0:
-                        self.state["action"] = dialogue_configuration.THANKS
-                    else:
-                        self.state["action"] = "not_sure"
-                        self.state["implicit_inform_slots"][slot] = dialogue_configuration.I_DO_NOT_KNOW
-
-        # The case where the agent action type is request, but nothing in agent request_slots, which should not appear.
-        # A randomized slot will be chosen to inform if the rest_slots is not empty.
+    #############################################
+    # Response confirm_answer where explicit_inform_slots and implicit_inform_slots are handled in the same way.
+    #############################################
+    def _response_confirm_answer_same(self, agent_action):
+        # TODO (Qianlong): response to confirm answer action. I don't think it is right.
+        if len(self.state["rest_slots"].keys()) > 0:
+            slot = random.choice(self.state["rest_slots"].keys())
+            if slot in self.goal["goal"]["request_slots"].keys():
+                self.state["action"] = "request"
+                self.state["request_slots"][slot] = dialogue_configuration.VALUE_UNKNOWN
+            elif slot in self.goal["goal"]["explicit_inform_slots"].keys():
+                self.state["action"] = "inform"
+                self.state["inform_slots"][slot] = self.goal["goal"]["explicit_inform_slots"][slot]
+                self.state["rest_slots"].pop(slot)
+            elif slot in self.goal["goal"]["implicit_inform_slots"].keys():
+                self.state["action"] = "inform"
+                self.state["inform_slots"][slot] = self.goal["goal"]["implicit_inform_slots"][slot]
+                self.state["rest_slots"].pop(slot)
         else:
-            if len(self.state["rest_slots"].keys()) > 0:
-                slot = random.choice(self.state["rest_slots"].keys())
-                if slot in self.goal["goal"]["explicit_inform_slots"].keys():# The case should not appear.
-                    self.state["action"] = "explicit_inform"
-                    self.state["explicit_inform_slots"][slot] = self.goal["goal"]["explicit_inform_slots"][slot]
-                    if slot in self.state["rest_slots"].keys(): self.state["rest_slots"].pop(slot)
-                elif slot in self.goal["goal"]["implicit_inform_slots"].keys():
-                    self.state["action"] = "implicit_inform"
-                    self.state["implicit_inform_slots"][slot] = self.goal["goal"]["implicit_inform_slots"][slot]
-                    if slot in self.state["rest_slots"].keys(): self.state["rest_slots"].pop(slot)
-                else:
-                    self.state["action"] = "not_sure"
-                    self.state["inform_slots"] = dialogue_configuration.I_DO_NOT_KNOW
-            else:
-                self.state["action"] = dialogue_configuration.THANKS
+            self.state["action"] = dialogue_configuration.THANKS
 
-    def _response_confirm_answer(self, agent_action):
+    #############################################
+    # Response confirm_answer where explicit_inform_slots and implicit_inform_slots are handled differently.
+    #############################################
+    def _response_confirm_answer_different(self, agent_action):
         # TODO (Qianlong): response to confirm answer action. I don't think it is right.
         if len(self.state["rest_slots"].keys()) > 0:
             slot = random.choice(self.state["rest_slots"].keys())
@@ -295,6 +382,9 @@ class User(object):
         else:
             self.state["action"] = dialogue_configuration.THANKS
 
+    ##########################################
+    # Response for thanks.
+    ##########################################
     def _response_thanks(self, agent_action):
         # TODO (Qianlong): response to thanks action.
         self.episode_over = True
@@ -323,12 +413,14 @@ class User(object):
         if self.constraint_check == dialogue_configuration.CONSTRAINT_CHECK_FAILURE:
             self.dialogue_status = dialogue_configuration.DIALOGUE_FAILED
 
-    def _response_inform(self, agent_action):
+    ##########################################
+    # Response for inform where explicit_inform_slots and implicit_inform_slots are handled in the same way.
+    ##########################################
+    def _response_inform_same(self, agent_action):
         # TODO (Qianlong): response to inform action.
-
         agent_all_inform_slots = copy.deepcopy(agent_action["inform_slots"])
-        agent_all_inform_slots.update(agent_action["explicit_slots"])
-        agent_all_inform_slots.update(agent_action["implicit_slots"])
+        agent_all_inform_slots.update(agent_action["explicit_inform_slots"])
+        agent_all_inform_slots.update(agent_action["implicit_inform_slots"])
 
         user_all_inform_slots = copy.deepcopy(self.goal["goal"]["explicit_inform_slots"])
         user_all_inform_slots.update(self.goal["goal"]["implicit_inform_slots"])
@@ -352,6 +444,153 @@ class User(object):
                     self.state["implicit_inform_slots"].clear()
                     self.constraint_check = dialogue_configuration.CONSTRAINT_CHECK_FAILURE
                     break
+        # The agent informed the right disease and dialogue is over.
+        elif "disease" in agent_action["inform_slots"].keys() and agent_action["inform_slots"]["disease"] == self.goal["disease_tag"]:
+            self.state["action"] = dialogue_configuration.CLOSE_DIALOGUE
+            self.dialogue_status = dialogue_configuration.DIALOGUE_SUCCESS
+            self.episode_over = True
+            self.state["inform_slots"].clear()
+            self.state["explicit_inform_slots"].clear()
+            self.state["implicit_inform_slots"].clear()
+            if "disease" in self.state["rest_slots"]: self.state["rest_slots"].pop("disease")
+        # The agent informed wrong disease and the dialogue will go on if not reach the max_turn.
+        elif "disease" in agent_action["inform_slots"].keys() and agent_action["inform_slots"]["disease"] != self.goal["disease_tag"]:
+            self.state["action"] = "deny"
+            self.dialogue_status = dialogue_configuration.INFORM_WRONG_DISEASE
+
+        else: # Task is not completed.
+            for slot in agent_all_inform_slots.keys():
+                self.state["history"][slot] = agent_all_inform_slots[slot]
+
+                # The slot comes from explicit/implicit_inform_slots of user.
+                if slot in user_all_inform_slots.keys():
+                    if agent_all_inform_slots[slot] == user_all_inform_slots[slot]:
+                        if slot in self.state["rest_slots"].keys(): self.state["rest_slots"].pop(slot)
+
+                        if len(self.state["request_slots"].keys()) > 0:
+                            self.state["action"] = "request"
+                        elif len(self.state["rest_slots"]) > 0:# The state["rest_slots"] is not empty.
+                            rest_slot_set = copy.deepcopy(list(self.state['rest_slots'].keys()))
+                            if "disease" in rest_slot_set:
+                                rest_slot_set.remove("disease")
+
+                            if len(rest_slot_set) > 0:
+                                inform_slot = random.choice(rest_slot_set)
+                                if inform_slot in self.goal["goal"]["explicit_inform_slots"].keys():
+                                    self.state["inform_slots"][inform_slot] = self.goal["goal"]["explicit_inform_slots"][inform_slot]
+                                    self.state["action"] = "inform"
+                                    self.state["rest_slots"].pop(inform_slot)
+                                elif inform_slot in self.goal["goal"]["implicit_inform_slots"].keys():
+                                    self.state["inform_slots"][inform_slot] = self.goal["goal"]["implicit_inform_slots"][inform_slot]
+                                    self.state["action"] = "inform"
+                                    self.state["rest_slots"].pop(inform_slot)
+                                elif inform_slot in self.goal["goal"]["request_slots"].keys():# This case will not appear
+                                    self.state["request_slots"][inform_slot] = dialogue_configuration.VALUE_UNKNOWN
+                                    self.state["action"] = "request"
+                                    self.state["rest_slots"].pop(inform_slot)
+                            else:
+                                self.state["request_slots"]["disease"] = dialogue_configuration.VALUE_UNKNOWN
+                                self.state["action"] = "request"
+                    else: # != value  Should we deny here or ?
+                        ########################################################################
+                        # TODO When agent informs(slot=value), where the value is different with the constraint in user goal, Should we deny or just inform the correct value?
+                        ########################################################################
+                        if slot in self.goal["goal"]["explicit_inform_slots"].keys():
+                            self.state["action"] = "inform"
+                            self.state["inform_slots"][slot] = self.goal["goal"]["explicit_inform_slots"][slot]
+                        elif slot in self.goal["goal"]["implicit_inform_slots"].keys():
+                            self.state["action"] = "inform"
+                            self.state["inform_slots"][slot] = self.goal["goal"]["implicit_inform_slots"][slot]
+                        if slot in self.state["rest_slots"]: self.state["rest_slots"].pop(slot)
+
+                else:
+                    if slot in self.state["request_slots"].keys(): self.state["request_slots"].pop(slot)
+                    if slot in self.state["rest_slots"].keys(): self.state["rest_slots"].pop(slot)
+
+                    if len(self.state["request_slots"]) > 0:
+                        request_slot_set = list(self.state["request_slots"].keys())
+                        if "disease" in request_slot_set:
+                            request_slot_set.remove("disease")
+
+                        if len(request_slot_set) > 0:
+                            request_slot = random.choice(request_slot_set)
+                        else:
+                            request_slot = "disease"
+
+                        self.state["request_slots"][request_slot] = dialogue_configuration.VALUE_UNKNOWN
+                        self.state["action"] = "request"
+                    elif len(self.state["rest_slots"].keys()) > 0:
+                        rest_slot_set = list(self.state["rest_slots"].keys())
+                        if "disease" in rest_slot_set: rest_slot_set.remove("disease")
+                        if len(rest_slot_set) > 0:
+                            inform_slot = random.choice(rest_slot_set)
+                            if inform_slot in self.goal["goal"]["explicit_inform_slots"].keys():
+                                self.state["inform_slots"][inform_slot] = self.goal["goal"]["explicit_inform_slots"][inform_slot]
+                                self.state["action"] = "inform"
+                                self.state["rest_slots"].pop(inform_slot)
+                                if "disease" in self.state["rest_slots"].keys():
+                                    self.state["request_slots"]["disease"] = dialogue_configuration.VALUE_UNKNOWN
+                                    self.state["action"] = "request"
+                            elif inform_slot in self.goal["goal"]["implicit_inform_slots"].keys():
+                                self.state["inform_slots"][inform_slot] = self.goal["goal"]["implicit_inform_slots"][inform_slot]
+                                self.state["action"] = "inform"
+                                self.state["rest_slots"].pop(inform_slot)
+                                if "disease" in self.state["rest_slots"].keys():
+                                    self.state["request_slots"]["disease"] = dialogue_configuration.VALUE_UNKNOWN
+                                    self.state["action"] = "request"
+                            elif inform_slot in self.goal["goal"]["request_slots"].keys():  # This case will not appear
+                                self.state["request_slots"][inform_slot] = dialogue_configuration.VALUE_UNKNOWN
+                                self.state["action"] = "request"
+                        else:
+                                self.state["request_slots"]["disease"] = dialogue_configuration.VALUE_UNKNOWN
+                                self.state["action"] = "request"
+                    else:
+                        self.state["action"] = dialogue_configuration.THANKS
+
+    ##########################################
+    # Response for inform where explicit_inform_slots and implicti_inform_slots are handled differently.
+    ##########################################
+    def _response_inform_different(self, agent_action):
+        # TODO (Qianlong): response to inform action.
+        agent_all_inform_slots = copy.deepcopy(agent_action["inform_slots"])
+        agent_all_inform_slots.update(agent_action["explicit_inform_slots"])
+        agent_all_inform_slots.update(agent_action["implicit_inform_slots"])
+
+        user_all_inform_slots = copy.deepcopy(self.goal["goal"]["explicit_inform_slots"])
+        user_all_inform_slots.update(self.goal["goal"]["implicit_inform_slots"])
+
+        if "taskcomplete" in agent_action["inform_slots"].keys(): # check all the constraints from agents with user goal
+            self.state["action"] = dialogue_configuration.THANKS
+            self.constraint_check = dialogue_configuration.CONSTRAINT_CHECK_SUCCESS
+            if agent_action["inform_slots"]["taskcomplete"] == dialogue_configuration.NO_VALUE_MATCH:
+                self.state["history"]["disease"] = dialogue_configuration.NO_VALUE_MATCH
+                if "disease" in self.state["rest_slots"].keys(): self.state["rest_slots"].pop("disease")
+                if "disease" in self.state["request_slots"].keys(): self.state["request_slots"].pop("disease")
+
+            #  Deny, if the answers from agent can not meet the constraints of user
+            for slot in user_all_inform_slots.keys():
+                if slot not in agent_all_inform_slots or agent_all_inform_slots[slot] != user_all_inform_slots[slot]:
+                    self.state["action"] = "deny"
+                    # TODO (Qianlong): don't know why this should be cleared.
+                    self.state["request_slots"].clear()
+                    self.state["inform_slots"].clear()
+                    self.state["explicit_inform_slots"].clear()
+                    self.state["implicit_inform_slots"].clear()
+                    self.constraint_check = dialogue_configuration.CONSTRAINT_CHECK_FAILURE
+                    break
+        # The agent informed the right disease and dialogue is over.
+        elif "disease" in agent_action["inform_slots"].keys() and agent_action["inform_slots"]["disease"] == self.goal["disease_tag"]:
+            self.state["action"] = dialogue_configuration.CLOSE_DIALOGUE
+            self.dialogue_status = dialogue_configuration.DIALOGUE_SUCCESS
+            self.episode_over = True
+            self.state["inform_slots"].clear()
+            self.state["explicit_inform_slots"].clear()
+            self.state["implicit_inform_slots"].clear()
+            if "disease" in self.state["rest_slots"]: self.state["rest_slots"].pop("disease")
+        # The agent informed wrong disease and the dialogue will go on if not reach the max_turn.
+        elif "disease" in agent_action["inform_slots"].keys() and agent_action["inform_slots"]["disease"] != self.goal["disease_tag"]:
+            self.state["action"] = "deny"
+            self.dialogue_status = dialogue_configuration.INFORM_WRONG_DISEASE
 
         else:
             for slot in agent_all_inform_slots.keys():

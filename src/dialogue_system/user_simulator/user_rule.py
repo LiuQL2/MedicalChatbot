@@ -10,7 +10,7 @@ from src.dialogue_system.user_simulator.user import User
 
 class UserRule(User):
     def __init__(self, goal_set, action_set, parameter):
-        User.__init__(self,goal_set=goal_set,action_set=action_set,parameter=parameter)
+        super(UserRule,self).__init__(goal_set=goal_set,action_set=action_set,parameter=parameter)
 
 
 if __name__ == "__main__":

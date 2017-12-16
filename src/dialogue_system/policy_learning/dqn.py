@@ -62,5 +62,3 @@ class DQN(object):
         outputs, state2 = self.session.run(self.lstm_cell, feed_dict={self.inputs:[state_rep]})
         print("state1:", state[-1][-1])
         print("state2:", state2[-1][-1])
-
-tf.Session()
