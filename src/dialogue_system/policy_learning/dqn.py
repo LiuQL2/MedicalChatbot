@@ -27,7 +27,7 @@ class MediumConfig(object):
     batch_size = 1
 
 
-class DQN(object):
+class LSTM(object):
     def __init__(self):
         self.state_rep_list = []
         config = MediumConfig()
@@ -47,7 +47,6 @@ class DQN(object):
             # tf.get_variable_scope().reuse_variables()
             lstm_layers = [tf.nn.rnn_cell.LSTMCell(size, forget_bias=1.0,state_is_tuple=True,reuse=None) for size in self.config.lstm_hidden_layer_size_lsit]
             print(type(lstm_layers))
-            # tf.nn.rnn_cell.LSTMCell()
             if self.config.keep_prob < 1 :
                 for index in range(0,len(lstm_layers)):
                     lstm_layers[index] = tf.nn.rnn_cell.DropoutWrapper(lstm_layers[index],input_keep_prob=self.config.keep_prob)
@@ -62,3 +61,27 @@ class DQN(object):
         outputs, state2 = self.session.run(self.lstm_cell, feed_dict={self.inputs:[state_rep]})
         print("state1:", state[-1][-1])
         print("state2:", state2[-1][-1])
+
+
+class DQN(object):
+    def __init__(self, input_size, hidden_size, output_size):
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.output_size = output_size
+        self.graph = tf.Graph()
+        with self.graph.as_default():
+            self.input = tf.placeholder(dtype=tf.float64,shape=(None, self.input_size), name="input")
+            with tf.variable_scope(name_or_scope="target_network"):
+                self.target_weights = tf.get_variable(name="weights", shape=(self.input_size, output_size),dtype=tf.float64)
+                self.target_bias = tf.get_variable(name="bias", shape=(self.output_size),dtype=tf.float64)
+                self.target_output = tf.nn.relu(tf.add(tf.matmul(self.input, self.target_weights),self.target_bias), name="target_output")
+            with tf.variable_scope(name_or_scope="current_network"):
+                self.current_weights = tf.get_variable(name="weights", shape=(self.input_size, output_size),dtype=tf.float64)
+                self.current_bias = tf.get_variable(name="bias", shape=(self.output_size),dtype=tf.float64)
+                self.current_output = tf.nn.relu(tf.add(tf.matmul(self.input,self.current_weights), self.current_bias), name="current_output")
+            self.update_target_bias = tf.assign(self.target_weights, self.current_weights.value())
+            self.update_target_bias = tf.assign(self.target_bias, self.current_bias.value())
+            self.loss = tf.reduce_mean(tf.reduce_sum(tf.square(self.target_output - self.current_output)))
+            self.optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.001).minimize(loss=self.loss)
+        self.initializer = tf.global_variables_initializer()
+        self.session = tf.Session(graph=self.graph)

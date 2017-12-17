@@ -6,11 +6,17 @@ DIALOGUE_SUCCESS = 1
 NOT_COME_YET = -1
 INFORM_WRONG_DISEASE = 2
 
+# REWORD FOR DIFFERENT DIALOGUE STATUS.
+REWARD_FOR_DIALOGUE_FAILED = -100
+REWARD_FOR_DIALOGUE_SUCCESS = 100
+REWARD_FOR_NOT_COME_YET = 0
+REWARD_FOR_INFORM_WRONG_DISEASE = -50
+
 # Special Actions.
 CLOSE_DIALOGUE = "closing"
 THANKS = "thanks"
 
-# Slot value for unknown
+# Slot value for unknown, placeholder and no value matches.
 VALUE_UNKNOWN = "UNK"
 VALUE_PLACEHOLDER = "placeholder"
 NO_VALUE_MATCH = "No value matches."

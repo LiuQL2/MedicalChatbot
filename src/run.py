@@ -8,8 +8,8 @@ sys.path.append(os.getcwd().replace("src/dialogue_system",""))
 
 from src.dialogue_system.dialogue_manager import DialogueManager
 # from src.dialogue_system.agent import AgentRandom as Agent
-# from src.dialogue_system.agent import AgentDQN as Agent
-from src.dialogue_system.agent import AgentRule as Agent
+from src.dialogue_system.agent import AgentDQN as Agent
+# from src.dialogue_system.agent import AgentRule as Agent
 from src.dialogue_system.user_simulator import UserRule as User
 from src.dialogue_system import dialogue_configuration
 
