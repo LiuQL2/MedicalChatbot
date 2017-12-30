@@ -22,7 +22,7 @@ class Agent(object):
         self.parameter = parameter
         self.candidate_disease_list = []
         self.candidate_symptom_list = []
-        self.experience_replay_pool = deque(maxlen=self.parameter["experience_replay_pool_size"])
+        self.action_sapce = self._build_action_space()
         self.agent_action = {
             "turn":1,
             "action":None,
@@ -36,7 +36,6 @@ class Agent(object):
     def initialize(self):
         self.candidate_disease_list = []
         self.candidate_symptom_list = []
-        self.experience_replay_pool = deque(maxlen=self.parameter["experience_replay_pool_size"])
         self.agent_action = {
             "turn":None,
             "action":None,
@@ -51,7 +50,10 @@ class Agent(object):
         # Take action based on different methods, e.g., DQN-based AgentDQN, rule-based AgentRule
         return self.agent_action
 
-    def _state_to_representation_history(self, state):
+    def train(self, batch):
+        pass
+
+    def state_to_representation_history(self, state):
         """
         Mapping dialogue state, which contains the history utterances and informed/requested slots up to this turn, into
         vector so that it can be fed into the model.
@@ -110,12 +112,17 @@ class Agent(object):
             current_slots.update(temp_action["current_slots"]["proposed_slots"])
             current_slots_rep = np.zeros(len(self.slot_set.keys()))
             for slot in current_slots.keys():
-                current_slots_rep[self.slot_set[slot]] = 1.0
+                if current_slots[slot] == True:
+                    current_slots_rep[self.slot_set[slot]] = 1.0
+                elif current_slots[slot] == dialogue_configuration.I_DO_NOT_KNOW:
+                    current_slots_rep[self.slot_set[slot]] = -1.0
+                elif current_slots[slot] == dialogue_configuration.I_DENY:
+                    current_slots_rep[self.slot_set[slot]] = 2
 
             state_rep.append(np.hstack((action_rep, request_rep, inform_slots_rep, explicit_inform_slots_rep, implicit_inform_slots_rep, turn_rep, current_slots_rep)).tolist())
         return state_rep
 
-    def _state_to_representation_last(self, state):
+    def state_to_representation_last(self, state):
         """
         Mapping dialogue state, which contains the history utterances and informed/requested slots up to this turn, into
         vector so that it can be fed into the model.
@@ -130,7 +137,12 @@ class Agent(object):
         current_slots.update(state["current_slots"]["proposed_slots"])
         current_slots_rep = np.zeros(len(self.slot_set.keys()))
         for slot in current_slots.keys():
-            current_slots_rep[self.slot_set[slot]] = 1.0
+            if current_slots[slot] == True:
+                current_slots_rep[self.slot_set[slot]] = 1.0
+            elif current_slots[slot] == dialogue_configuration.I_DO_NOT_KNOW:
+                current_slots_rep[self.slot_set[slot]] = -1.0
+            elif current_slots[slot] == dialogue_configuration.I_DENY:
+                current_slots_rep[self.slot_set[slot]] = 2
 
         # Turn rep.
         turn_rep = np.zeros(self.parameter["max_turn"])
@@ -156,26 +168,61 @@ class Agent(object):
 
         # Agent last action rep.
         agent_action_rep = np.zeros(len(self.action_set))
-        agent_action_rep[self.action_set[state["agent_action"]["action"]]] = 1.0
+        try:
+            agent_action_rep[self.action_set[state["agent_action"]["action"]]] = 1.0
+        except:
+            pass
 
         # Agent last inform slots rep.
-        agent_inform_slots = copy.deepcopy(state["agent_action"]["inform_slots"])
-        agent_inform_slots.update(state["agent_action"]["explicit_inform_slots"])
-        agent_inform_slots.update(state["agent_action"]["implicit_inform_slots"])
+
         agent_inform_slots_rep = np.zeros(len(self.slot_set.keys()))
-        for slot in agent_inform_slots.keys():
-            agent_inform_slots_rep[self.slot_set[slot]] = 1.0
+        try:
+           agent_inform_slots = copy.deepcopy(state["agent_action"]["inform_slots"])
+           agent_inform_slots.update(state["agent_action"]["explicit_inform_slots"])
+           agent_inform_slots.update(state["agent_action"]["implicit_inform_slots"])
+           for slot in agent_inform_slots.keys():
+               agent_inform_slots_rep[self.slot_set[slot]] = 1.0
+        except:
+            pass
 
         # Agent last request slot rep.
-        agent_request_slots = copy.deepcopy(state["agent_action"]["request_slots"])
         agent_request_slots_rep = np.zeros(len(self.slot_set.keys()))
-        for slot in agent_request_slots.keys():
-            agent_request_slots_rep[self.slot_set[slot]] = 1.0
+        try:
+            agent_request_slots = copy.deepcopy(state["agent_action"]["request_slots"])
+            for slot in agent_request_slots.keys():
+                agent_request_slots_rep[self.slot_set[slot]] = 1.0
+        except:
+            pass
 
         state_rep = np.hstack((current_slots_rep,user_action_rep, user_inform_slots_rep, user_request_slots_rep, agent_action_rep, agent_inform_slots_rep, agent_request_slots_rep, turn_rep))
         return state_rep
 
-    def record_training_sample(self, state, agent_action, reward, next_state, episode_over):
-        state = self._state_to_representation_last(state)
-        next_state = self._state_to_representation_last(next_state)
-        self.experience_replay_pool.append((state, agent_action, reward, next_state, episode_over))
+    def _build_action_space(self):
+        """
+        Building the Action Space for the RL-based Agent.
+        All diseases are treated as actions.
+        :return: Action Space, a list of feasible actions.
+        """
+
+        feasible_actions = [
+            #   greeting actions
+            # {'action':"greeting", 'inform_slots':{}, 'request_slots':{}},
+            #   confirm_question actions
+            {'action': "confirm_question", 'inform_slots': {}, 'request_slots': {},"explicit_inform_slots":{}, "implicit_inform_slots":{}},
+            #   confirm_answer actions
+            {'action': "confirm_answer", 'inform_slots': {}, 'request_slots': {},"explicit_inform_slots":{}, "implicit_inform_slots":{}},
+            #   thanks actions
+            {'action': "thanks", 'inform_slots': {}, 'request_slots': {},"explicit_inform_slots":{}, "implicit_inform_slots":{}},
+            #   deny actions
+            {'action': "deny", 'inform_slots': {}, 'request_slots': {},"explicit_inform_slots":{}, "implicit_inform_slots":{}},
+        ]
+        #   Adding the inform actions and request actions.
+        for slot in self.slot_set.keys():
+            feasible_actions.append({'action': 'inform', 'inform_slots': {slot: dialogue_configuration.VALUE_PLACEHOLDER}, 'request_slots': {}, "explicit_inform_slots":{}, "implicit_inform_slots":{}})
+            feasible_actions.append({'action': 'request', 'inform_slots': {}, 'request_slots': {slot: dialogue_configuration.VALUE_UNKNOWN},"explicit_inform_slots":{}, "implicit_inform_slots":{}})
+
+        # Diseases as actions.
+        for disease in self.disease_symptom.keys():
+            feasible_actions.append({'action': 'inform', 'inform_slots': {"disease":disease}, 'request_slots': {},"explicit_inform_slots":{}, "implicit_inform_slots":{}})
+
+        return feasible_actions

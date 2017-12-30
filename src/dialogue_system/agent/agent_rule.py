@@ -20,41 +20,62 @@ class AgentRule(Agent):
         candidate_disease_symptoms = self._get_candidate_disease_symptoms(state=state)
         disease = candidate_disease_symptoms["disease"]
         candidate_symptoms = candidate_disease_symptoms["candidate_symptoms"]
+        self.agent_action["request_slots"].clear()
+        self.agent_action["explicit_inform_slots"].clear()
+        self.agent_action["implicit_inform_slots"].clear()
+        self.agent_action["inform_slots"].clear()
+
         if len(candidate_symptoms) == 0:
             self.agent_action["action"] = "inform"
             self.agent_action["inform_slots"]["disease"] = disease
         else:
             symptom = random.choice(candidate_symptoms)
             self.agent_action["action"] = "request"
+            self.agent_action["request_slots"].clear()
             self.agent_action["request_slots"][symptom] = dialogue_configuration.VALUE_UNKNOWN
-
-        return self.agent_action
+        agent_action = copy.deepcopy(self.agent_action)
+        agent_action.pop("turn")
+        agent_action.pop("speaker")
+        agent_index = self.action_sapce.index(agent_action)
+        return self.agent_action, agent_index
 
     def _get_candidate_disease_symptoms(self, state):
         """
-        Comparing state["current_slots"] with disease_symptom to identify which disease the user possibly have.
+        Comparing state["current_slots"] with disease_symptom to identify which disease the user may have.
         :param state: Dialogue state defined in state_tracker.
         :return: Candidate symptoms list.
         """
         inform_slots = state["current_slots"]["inform_slots"]
         inform_slots.update(state["current_slots"]["explicit_inform_slots"])
         inform_slots.update(state["current_slots"]["implicit_inform_slots"])
+        # print("current slots of state of turn %2d:" % self.agent_action["turn"], state["current_slots"])
 
         # Calculate number of informed symptom for each disease.
         disease_match_number = {}
         for disease in self.disease_symptom.keys():
-            disease_match_number[disease] = 0
+            disease_match_number[disease] = {}
+            disease_match_number[disease]["yes"] = 0
+            disease_match_number[disease]["not_sure"] = 0
+            disease_match_number[disease]["deny"] = 0
 
         for slot in inform_slots.keys():
             for disease in disease_match_number.keys():
-                if inform_slots[slot] in self.disease_symptom[disease]["symptom"]:
-                    disease_match_number[disease] += 1
-        # Get the ratio of informed symptom number to the number of each disease.
-        for disease in disease_match_number.keys():
-            match_number = copy.deepcopy(disease_match_number[disease])
-            disease_match_number[disease] = float(match_number) / len(self.disease_symptom[disease]["symptom"])
+                if inform_slots[slot] in self.disease_symptom[disease]["symptom"] and inform_slots[slot] == True:
+                    disease_match_number[disease]["yes"] += 1
+                elif inform_slots[slot] in self.disease_symptom[disease]["symptom"] and inform_slots[slot] == dialogue_configuration.I_DO_NOT_KNOW:
+                    disease_match_number[disease]["not_sure"] += 1
+                elif inform_slots[slot] in self.disease_symptom[disease]["symptom"] and inform_slots[slot] == dialogue_configuration.I_DENY:
+                    disease_match_number[disease]["deny"] += 1
 
-        match_disease = max(disease_match_number.items(), key=lambda x: x[1])[0] # Get the most probable disease that the user have.
+        # Get the ratio of informed symptom number to the number of symptoms of each disease.
+        disease_score = {}
+        for disease in disease_match_number.keys():
+            yes_score = float(disease_match_number[disease]["yes"]) / len(self.disease_symptom[disease]["symptom"])
+            not_sure_score = float(disease_match_number[disease]["not_sure"]) / len(self.disease_symptom[disease]["symptom"])
+            deny_score = float(disease_match_number[disease]["deny"]) / len(self.disease_symptom[disease]["symptom"])
+            disease_score[disease] = yes_score - 0.5*not_sure_score - deny_score
+
+        match_disease = max(disease_score.items(), key=lambda x: x[1])[0] # Get the most probable disease that the user have.
         # Candidate symptom list of symptoms that belong to the most probable disease but have't been informed yet.
         candidate_symptoms = []
         for symptom in self.disease_symptom[match_disease]["symptom"]:

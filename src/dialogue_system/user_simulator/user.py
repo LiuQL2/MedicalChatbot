@@ -127,29 +127,44 @@ class User(object):
         else:
             pass
 
+        if self.episode_over is not True:
+            self.state["history"].update(self.state["inform_slots"])
+            self.state["history"].update(self.state["explicit_inform_slots"])
+            self.state["history"].update(self.state["implicit_inform_slots"])
 
-        # Response according to different action type.
-        if agent_act_type == dialogue_configuration.CLOSE_DIALOGUE:
-            self._response_closing(agent_action=agent_action)
-        elif agent_act_type == "request":
-            self._response_request_same(agent_action=agent_action) # explicit/implicit_inform_slots are handled in the same way.
-            # self._response_request_different(agent_action=agent_action) # explicit/implicit_inform_slots are handled differently.
-        elif agent_act_type == dialogue_configuration.THANKS:
-            self._response_thanks(agent_action=agent_action)
-        elif agent_act_type == "confirm_answer":
-            self._response_confirm_answer_same(agent_action=agent_action) # Explicit/implicit_inform_slots are handled in the same way.
-            # self._response_confirm_answer_different(agent_action=agent_action) # Explicit/implicit_inform_slots are handled differently.
-        elif agent_act_type == "inform":
-            self._response_inform_same(agent_action=agent_action) # Explicit/implicit_inform_slots are handled in the same way.
-            # self._response_inform_different(agent_action=agent_action) # Explicit/implicit_inform_slots are handled differently.
-        elif agent_act_type == "explicit_inform":
-            self._response_inform_same(agent_action=agent_action) # Explicit/implicit_inform_slots are handled in the same way.
-            # self._response_inform_different(agent_action=agent_action) # Explicit/implicit_inform_slots are handled differently.
-        elif agent_act_type == "implicit_inform":
-            self._response_inform_same(agent_action=agent_action) # Explicit/implicit_inform_slots are handled in the same way.
-            # self._response_inform_different(agent_action=agent_action) # Explicit/implicit_inform_slots are handled differently.
-        user_action = self._assemble_user_action()
-        return user_action, self.episode_over, self.dialogue_status
+            self.state["inform_slots"].clear()
+            self.state["explicit_inform_slots"].clear()
+            self.state["implicit_inform_slots"].clear()
+
+            # Response according to different action type.
+            if agent_act_type == dialogue_configuration.CLOSE_DIALOGUE:
+                self._response_closing(agent_action=agent_action)
+            elif agent_act_type == "request":
+                self._response_request_same(
+                    agent_action=agent_action)  # explicit/implicit_inform_slots are handled in the same way.
+                # self._response_request_different(agent_action=agent_action) # explicit/implicit_inform_slots are handled differently.
+            elif agent_act_type == dialogue_configuration.THANKS:
+                self._response_thanks(agent_action=agent_action)
+            elif agent_act_type == "confirm_answer":
+                self._response_confirm_answer_same(
+                    agent_action=agent_action)  # Explicit/implicit_inform_slots are handled in the same way.
+                # self._response_confirm_answer_different(agent_action=agent_action) # Explicit/implicit_inform_slots are handled differently.
+            elif agent_act_type == "inform":
+                self._response_inform_same(
+                    agent_action=agent_action)  # Explicit/implicit_inform_slots are handled in the same way.
+                # self._response_inform_different(agent_action=agent_action) # Explicit/implicit_inform_slots are handled differently.
+            elif agent_act_type == "explicit_inform":
+                self._response_inform_same(
+                    agent_action=agent_action)  # Explicit/implicit_inform_slots are handled in the same way.
+                # self._response_inform_different(agent_action=agent_action) # Explicit/implicit_inform_slots are handled differently.
+            elif agent_act_type == "implicit_inform":
+                self._response_inform_same(
+                    agent_action=agent_action)  # Explicit/implicit_inform_slots are handled in the same way.
+                # self._response_inform_different(agent_action=agent_action) # Explicit/implicit_inform_slots are handled differently.
+            user_action = self._assemble_user_action()
+            return user_action, self.episode_over, self.dialogue_status
+        else:
+            pass
 
     def _response_closing(self, agent_action):
         self.state["action"] = dialogue_configuration.THANKS
@@ -346,7 +361,7 @@ class User(object):
     def _response_confirm_answer_same(self, agent_action):
         # TODO (Qianlong): response to confirm answer action. I don't think it is right.
         if len(self.state["rest_slots"].keys()) > 0:
-            slot = random.choice(self.state["rest_slots"].keys())
+            slot = random.choice(list(self.state["rest_slots"].keys()))
             if slot in self.goal["goal"]["request_slots"].keys():
                 self.state["action"] = "request"
                 self.state["request_slots"][slot] = dialogue_configuration.VALUE_UNKNOWN
@@ -408,7 +423,7 @@ class User(object):
                 self.state["history"][slot] != self.goal["goal"]["implicit_inform_slots"][slot]:
                 self.dialogue_status = dialogue_configuration.DIALOGUE_FAILED
         if "disease" in agent_action["inform_slots"].keys():
-            if agent_action["inform_slots"]["disease"] == dialogue_configuration.NO_VALUE_MATCH:
+            if agent_action["inform_slots"]["disease"] == dialogue_configuration.VALUE_NO_MATCH:
                 self.dialogue_status = dialogue_configuration.DIALOGUE_FAILED
         if self.constraint_check == dialogue_configuration.CONSTRAINT_CHECK_FAILURE:
             self.dialogue_status = dialogue_configuration.DIALOGUE_FAILED
@@ -428,8 +443,8 @@ class User(object):
         if "taskcomplete" in agent_action["inform_slots"].keys(): # check all the constraints from agents with user goal
             self.state["action"] = dialogue_configuration.THANKS
             self.constraint_check = dialogue_configuration.CONSTRAINT_CHECK_SUCCESS
-            if agent_action["inform_slots"]["taskcomplete"] == dialogue_configuration.NO_VALUE_MATCH:
-                self.state["history"]["disease"] = dialogue_configuration.NO_VALUE_MATCH
+            if agent_action["inform_slots"]["taskcomplete"] == dialogue_configuration.VALUE_NO_MATCH:
+                self.state["history"]["disease"] = dialogue_configuration.VALUE_NO_MATCH
                 if "disease" in self.state["rest_slots"].keys(): self.state["rest_slots"].pop("disease")
                 if "disease" in self.state["request_slots"].keys(): self.state["request_slots"].pop("disease")
 
@@ -548,7 +563,7 @@ class User(object):
                         self.state["action"] = dialogue_configuration.THANKS
 
     ##########################################
-    # Response for inform where explicit_inform_slots and implicti_inform_slots are handled differently.
+    # Response for inform where explicit_inform_slots and implicit_inform_slots are handled differently.
     ##########################################
     def _response_inform_different(self, agent_action):
         # TODO (Qianlong): response to inform action.
@@ -562,8 +577,8 @@ class User(object):
         if "taskcomplete" in agent_action["inform_slots"].keys(): # check all the constraints from agents with user goal
             self.state["action"] = dialogue_configuration.THANKS
             self.constraint_check = dialogue_configuration.CONSTRAINT_CHECK_SUCCESS
-            if agent_action["inform_slots"]["taskcomplete"] == dialogue_configuration.NO_VALUE_MATCH:
-                self.state["history"]["disease"] = dialogue_configuration.NO_VALUE_MATCH
+            if agent_action["inform_slots"]["taskcomplete"] == dialogue_configuration.VALUE_NO_MATCH:
+                self.state["history"]["disease"] = dialogue_configuration.VALUE_NO_MATCH
                 if "disease" in self.state["rest_slots"].keys(): self.state["rest_slots"].pop("disease")
                 if "disease" in self.state["request_slots"].keys(): self.state["request_slots"].pop("disease")
 
