@@ -25,18 +25,22 @@ class AgentDQN(Agent):
         input_size = parameter.get("input_size_dqn", 182)
         hidden_size = parameter.get("hidden_size_dqn", 100)
         output_size = len(self.action_sapce)
-        checkpoint_path = parameter.get("checkpoint_path")
-        self.dqn = DQN(input_size=input_size, hidden_size=hidden_size,output_size=output_size, checkpoint_path=checkpoint_path)
+        self.dqn = DQN(input_size=input_size, hidden_size=hidden_size,output_size=output_size, parameter=parameter)
 
     def next(self, state, turn):
         # TODO (Qianlong): take action condition on current state.
         self.agent_action["turn"] = turn
         state_rep = self.state_to_representation_last(state=state) # sequence representation.
+        greedy = random.random()
+        if greedy < self.parameter.get("epsilon"):
+            action_index = random.randint(0, len(self.action_sapce)-1)
+        else:
+            action_index = self.dqn.predict(Xs=[state_rep])[1]
 
-        action_index = self.dqn.predict(Xs=[state_rep])[1]
         agent_action = self.action_sapce[action_index]
         agent_action["turn"] = turn
         agent_action["speaker"] = "agent"
+
         return agent_action, action_index
 
     def train(self, batch):

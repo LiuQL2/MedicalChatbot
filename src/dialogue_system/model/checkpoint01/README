@@ -1,0 +1,2 @@
+This models were trained using the first random division of user_goal, which train:test:validation = 7:2:1;
+The train set, test set and validation are different at different division, so it is not a good idea to evaluate this models with test set of new division.

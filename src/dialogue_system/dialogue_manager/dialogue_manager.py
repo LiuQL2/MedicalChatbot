@@ -20,6 +20,7 @@ class DialogueManager(object):
         self.episode_over = False
         self.dialogue_status = dialogue_configuration.NOT_COME_YET
         self.experience_replay_pool = deque(maxlen=self.parameter.get("experience_replay_pool_size"))
+        self.inform_wrong_disease_count = 0
 
     def next(self):
         # Agent takes action.
@@ -37,8 +38,9 @@ class DialogueManager(object):
 
         if self.state_tracker.turn == self.state_tracker.max_turn:
             self.episode_over = True
-        else:
-            pass
+
+        if self.dialogue_status == dialogue_configuration.INFORM_WRONG_DISEASE:
+            self.inform_wrong_disease_count += 1
 
         reward = self._reward_function()
         self.record_training_sample(
@@ -54,6 +56,7 @@ class DialogueManager(object):
     def initialize(self):
         self.state_tracker.initialize()
         self.episode_over = False
+        self.inform_wrong_disease_count = 0
         self.dialogue_status = dialogue_configuration.NOT_COME_YET
         user_action = self.state_tracker.user.initialize()
         self.state_tracker.state_updater(user_action=user_action)

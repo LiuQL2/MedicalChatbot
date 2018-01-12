@@ -146,20 +146,16 @@ class User(object):
             elif agent_act_type == dialogue_configuration.THANKS:
                 self._response_thanks(agent_action=agent_action)
             elif agent_act_type == "confirm_answer":
-                self._response_confirm_answer_same(
-                    agent_action=agent_action)  # Explicit/implicit_inform_slots are handled in the same way.
+                self._response_confirm_answer_same(agent_action=agent_action)  # Explicit/implicit_inform_slots are handled in the same way.
                 # self._response_confirm_answer_different(agent_action=agent_action) # Explicit/implicit_inform_slots are handled differently.
             elif agent_act_type == "inform":
-                self._response_inform_same(
-                    agent_action=agent_action)  # Explicit/implicit_inform_slots are handled in the same way.
+                self._response_inform_same(agent_action=agent_action)  # Explicit/implicit_inform_slots are handled in the same way.
                 # self._response_inform_different(agent_action=agent_action) # Explicit/implicit_inform_slots are handled differently.
             elif agent_act_type == "explicit_inform":
-                self._response_inform_same(
-                    agent_action=agent_action)  # Explicit/implicit_inform_slots are handled in the same way.
+                self._response_inform_same(agent_action=agent_action)  # Explicit/implicit_inform_slots are handled in the same way.
                 # self._response_inform_different(agent_action=agent_action) # Explicit/implicit_inform_slots are handled differently.
             elif agent_act_type == "implicit_inform":
-                self._response_inform_same(
-                    agent_action=agent_action)  # Explicit/implicit_inform_slots are handled in the same way.
+                self._response_inform_same(agent_action=agent_action)  # Explicit/implicit_inform_slots are handled in the same way.
                 # self._response_inform_different(agent_action=agent_action) # Explicit/implicit_inform_slots are handled differently.
             user_action = self._assemble_user_action()
             return user_action, self.episode_over, self.dialogue_status

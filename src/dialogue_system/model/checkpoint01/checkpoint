@@ -1,0 +1,3 @@
+model_checkpoint_path: "model_s0.86_r472.0_t11.66_wd3.88.ckpt"
+all_model_checkpoint_paths: "model_s0.84_r408.0_t12.62_wd4.32.ckpt"
+all_model_checkpoint_paths: "model_s0.86_r472.0_t11.66_wd3.88.ckpt"
