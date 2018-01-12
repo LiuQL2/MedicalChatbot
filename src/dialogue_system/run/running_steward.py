@@ -43,7 +43,7 @@ class RunningSteward(object):
 
             if result["success_rate"] >= self.best_result["success_rate"] and \
                     result["success_rate"] > dialogue_configuration.SUCCESS_RATE_THRESHOLD and \
-                    result["average_wrong_disease"] <= self.best_result["average_wrong_disease"]:
+                    result["average_wrong_disease"] <= self.best_result["average_wrong_disease"] and train==True:
                 self.dialogue_manager.experience_replay_pool = deque(maxlen=self.parameter.get("experience_replay_pool_size"))
                 self.simulation_epoch(index)
                 self.dialogue_manager.state_tracker.agent.dqn.save_model(model_performance=result)

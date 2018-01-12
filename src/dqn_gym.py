@@ -89,7 +89,7 @@ parser.add_argument("--gamma", dest="gamma", type=float, default=0.9, help="The 
 parser.add_argument("--hidden_size_dqn", dest="hidden_size_dqn", type=int, default=100, help="the hidden_size of DQN.")
 parser.add_argument("--input_size_dqn", dest="input_size_dqn", type=int, default=182, help="the input_size of DQN.")
 parser.add_argument("--batch_size", dest="batch_size", type=int, default=16, help="the batch size when training.")
-parser.add_argument("--checkpoint_path",dest="checkpoint_path", type=str, default="./../model/checkpoint/", help="the folder where models save to, ending with /.")
+parser.add_argument("--checkpoint_path",dest="checkpoint_path", type=str, default="./../model/checkpoint01/", help="the folder where models save to, ending with /.")
 parser.add_argument("--log_dir", dest="log_dir", type=str, default="./../../../log/", help="directory where event file of training will be written, ending with /")
 parser.add_argument("--epsilon", dest="epsilon", type=float, default=0.1, help="the greedy of DQN")
 

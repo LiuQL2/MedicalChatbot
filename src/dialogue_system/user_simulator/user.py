@@ -58,6 +58,7 @@ class User(object):
         self.goal_set = goal_set
         self.action_set = action_set
         self.max_turn = parameter["max_turn"]
+        self.parameter = parameter
         self._init()
 
     def initialize(self):
@@ -100,7 +101,10 @@ class User(object):
             "implicit_inform_slots":{}, # For slots that belong to goal["implicit_inform_slots"]
             "rest_slots":{} # For slots that have not been informed.
         }
-        self.goal = random.choice(self.goal_set["train"])
+        if self.parameter.get("train_mode") is True:
+            self.goal = random.choice(self.goal_set["train"])
+        else:
+            self.goal = random.choice(self.goal_set["test"])
         self.episode_over = False
         self.dialogue_status = dialogue_configuration.NOT_COME_YET
         self.constraint_check = dialogue_configuration.CONSTRAINT_CHECK_FAILURE

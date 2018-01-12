@@ -1,6 +1,7 @@
 .idea/
 resources/
 others/
+src/dialogue_system/data/*
 **/*/__pycache__
 **/*.logs
 **/*.log

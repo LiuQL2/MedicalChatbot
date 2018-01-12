@@ -65,7 +65,7 @@ class GoalDumper(object):
     def __init__(self, goal_file):
         self.file_name = goal_file
 
-    def dump(self, dump_file_name, train=0.7, test=0.2, validate=0.1):
+    def dump(self, dump_file_name, train=0.8, test=0.2, validate=0.0):
         assert (train*100+test*100+validate*100==100), "train + test + validate not equals to 1.0."
         self.goal_set = []
         data_file = open(file=self.file_name, mode="r")
@@ -101,4 +101,4 @@ if __name__ == "__main__":
     goal_file = "./../../../resources/goal_slot_value_0.2.json"
     goal_dump_file = "./../data/goal_set.p"
     goal_dumper = GoalDumper(goal_file=goal_file)
-    # goal_dumper.dump(dump_file_name=goal_dump_file)
+    goal_dumper.dump(dump_file_name=goal_dump_file)

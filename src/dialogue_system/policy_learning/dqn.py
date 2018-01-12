@@ -16,6 +16,7 @@ class DQN(object):
         self.output_size = output_size
         self.checkpoint_path = parameter.get("checkpoint_path")
         self.log_dir = parameter.get("log_dir")
+        self.parameter = parameter
 
         with tf.device("/device:GPU:0"):
             self.graph = tf.Graph()
@@ -59,6 +60,9 @@ class DQN(object):
         config.log_device_placement = True
         self.session = tf.Session(graph=self.graph,config=config)
         self.session.run(self.initializer)
+
+        if self.parameter.get("train_mode") is not True:
+            self.restore_model(self.parameter.get("saved_model"))
 
     def singleBatch(self, batch, params):
         # state, agent_action, reward, next_state, episode_over
@@ -111,3 +115,7 @@ class DQN(object):
         average_wrong_disease = model_performance["average_wrong_disease"]
         model_file_name = "model_s" + str(success_rate) + "_r" + str(average_reward) + "_t" + str(average_turn) + "_wd" + str(average_wrong_disease) + ".ckpt"
         self.model_saver.save(sess=self.session,save_path=self.checkpoint_path + model_file_name)
+
+    def restore_model(self, saved_model):
+        print("loading trained model")
+        self.model_saver.restore(sess=self.session,save_path=saved_model)

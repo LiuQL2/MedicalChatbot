@@ -30,9 +30,12 @@ parser.add_argument("--input_size_dqn", dest="input_size_dqn", type=int, default
 parser.add_argument("--warm_start", dest="warm_start",type=int, default=1, help="use rule policy to fill the experience replay buffer at the beginning, 1:True; 0:False")
 parser.add_argument("--warm_start_episodes", dest="warm_start_episodes", type=int, default=20, help="the number of episodes of warm start.")
 parser.add_argument("--batch_size", dest="batch_size", type=int, default=16, help="the batch size when training.")
-parser.add_argument("--checkpoint_path",dest="checkpoint_path", type=str, default="./../model/checkpoint/", help="the folder where models save to, ending with /.")
 parser.add_argument("--log_dir", dest="log_dir", type=str, default="./../../../log/", help="directory where event file of training will be written, ending with /")
 parser.add_argument("--epsilon", dest="epsilon", type=float, default=0.1, help="the greedy of DQN")
+parser.add_argument("--train_mode", dest="train_mode", type=bool, default=True, help="training mode? True or False")
+parser.add_argument("--checkpoint_path",dest="checkpoint_path", type=str, default="./../model/checkpoint/", help="the folder where models save to, ending with /.")
+# parser.add_argument("--saved_model", dest="saved_model", type=str, default="./../model/checkpoint01/saved_model/model_s0.81_r344.0_t13.22_wd4.64.ckpt")
+parser.add_argument("--saved_model", dest="saved_model", type=str, default="./../model/checkpoint01/model_s0.86_r472.0_t11.66_wd3.88.ckpt")
 
 args = parser.parse_args()
 parameter = vars(args)
@@ -45,18 +48,24 @@ def run():
 
     steward = RunningSteward(parameter=parameter)
 
+    saved_model = parameter.get("saved_model")
+    path = parameter.get("checkpoint_path")
+    print(saved_model)
+    print(path)
+    # exit()
+
     warm_start = parameter.get("warm_start")
     warm_start_episodes = parameter.get("warm_start_episodes")
+    train_mode = parameter.get("train_mode")
 
     # Warm start.
-    if warm_start == 1:
+    if warm_start == 1 and train_mode == True:
         agent = AgentRule(action_set=action_set,slot_set=slot_set,disease_symptom=disease_symptom,parameter=parameter)
         steward.warm_start(agent=agent,episode_size=warm_start_episodes)
 
     episodes = parameter.get("episodes")
     agent = Agent(action_set=action_set,slot_set=slot_set,disease_symptom=disease_symptom,parameter=parameter)
-
-    steward.simulate(agent=agent,episodes=episodes, train=True)
+    steward.simulate(agent=agent,episodes=episodes, train=train_mode)
 
 
 if __name__ == "__main__":
