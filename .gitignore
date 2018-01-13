@@ -2,6 +2,7 @@
 resources/
 others/
 src/dialogue_system/data/*
+log/train/*
 **/*/__pycache__
 **/*.logs
 **/*.log

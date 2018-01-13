@@ -61,7 +61,7 @@ class DQN(object):
         self.session = tf.Session(graph=self.graph,config=config)
         self.session.run(self.initializer)
 
-        if self.parameter.get("train_mode") is not True:
+        if self.parameter.get("train_mode") != 1:
             self.restore_model(self.parameter.get("saved_model"))
 
     def singleBatch(self, batch, params):
@@ -108,12 +108,12 @@ class DQN(object):
         self.session.run(self.update_target_weights)
         self.session.run(self.update_target_bias)
 
-    def save_model(self, model_performance):
+    def save_model(self, model_performance,episodes_index):
         success_rate = model_performance["success_rate"]
         average_reward = model_performance["average_reward"]
         average_turn = model_performance["average_turn"]
         average_wrong_disease = model_performance["average_wrong_disease"]
-        model_file_name = "model_s" + str(success_rate) + "_r" + str(average_reward) + "_t" + str(average_turn) + "_wd" + str(average_wrong_disease) + ".ckpt"
+        model_file_name = "model_s" + str(success_rate) + "_r" + str(average_reward) + "_t" + str(average_turn) + "_wd" + str(average_wrong_disease) + "_e" + str(episodes_index) + ".ckpt"
         self.model_saver.save(sess=self.session,save_path=self.checkpoint_path + model_file_name)
 
     def restore_model(self, saved_model):

@@ -31,26 +31,31 @@ class RunningSteward(object):
 
         self.best_result = {"success_rate":0.0, "average_reward": 0.0, "average_turn": 0,"average_wrong_disease":10}
 
-    def simulate(self, agent, episodes, train=False):
+    def simulate(self, agent, episodes, train=0):
         self.dialogue_manager.set_agent(agent=agent)
-        # if train == True:
+        # if train == 1:
         #     for train_index in range(0,10,1):
         #         self.dialogue_manager.train()
         #         self.dialogue_manager.state_tracker.agent.dqn.update_target_network()
         #         print("%2d / %d training dqn using warm start experience buffer."%(train_index,50))
+
+
         for index in range(0, episodes,1):
+            # Trainning Agent with experience replay
+            if train == 1:
+                self.dialogue_manager.train()
+                self.dialogue_manager.state_tracker.agent.dqn.update_target_network()
+
             result = self.simulation_epoch(index)
 
             if result["success_rate"] >= self.best_result["success_rate"] and \
                     result["success_rate"] > dialogue_configuration.SUCCESS_RATE_THRESHOLD and \
-                    result["average_wrong_disease"] <= self.best_result["average_wrong_disease"] and train==True:
+                    result["average_wrong_disease"] <= self.best_result["average_wrong_disease"] and train==1:
                 self.dialogue_manager.experience_replay_pool = deque(maxlen=self.parameter.get("experience_replay_pool_size"))
                 self.simulation_epoch(index)
-                self.dialogue_manager.state_tracker.agent.dqn.save_model(model_performance=result)
+                self.dialogue_manager.state_tracker.agent.dqn.save_model(model_performance=result, episodes_index = index)
                 print("The model was saved.")
                 self.best_result = copy.deepcopy(result)
-
-            self.dialogue_manager.state_tracker.agent.dqn.update_target_network()
 
             # if result["success_rate"] >= self.best_result["success_rate"] and \
             #             result["average_wrong_disease"] <= dialogue_configuration.AVERAGE_WRONG_DISEASE:
@@ -61,10 +66,6 @@ class RunningSteward(object):
             #         time.sleep(10)
             #     else:
             #         pass
-
-            # Trainning Agent with experience replay
-            if train == True:
-                self.dialogue_manager.train()
 
     def simulation_epoch(self,index):
         success_count = 0

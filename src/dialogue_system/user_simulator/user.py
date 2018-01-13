@@ -72,9 +72,19 @@ class User(object):
         self.state["action"] = "request"
         self.state["request_slots"]["disease"] = dialogue_configuration.VALUE_UNKNOWN
 
+        first_inform_number = random.randint(1,len(goal["explicit_inform_slots"].keys()))
+        inform_slots = random.sample(list(goal["explicit_inform_slots"].keys()),k=first_inform_number)
+
         for slot in goal["explicit_inform_slots"].keys():
             # self.state["explicit_inform_slots"][slot] = goal["explicit_inform_slots"][slot]
+
+            # Informing all explicit slots at the beginning of the dialogue..
             self.state["inform_slots"][slot] = goal["explicit_inform_slots"][slot]
+
+            # Informing several slots at first.
+            # if slot in inform_slots:
+            #     self.state["inform_slots"][slot] = goal["explicit_inform_slots"][slot]
+
         for slot in goal["implicit_inform_slots"].keys():
             self.state["rest_slots"][slot] = "implicit_inform_slots" # Remember where the rest slot comes from.
         for slot in goal["explicit_inform_slots"].keys():
@@ -479,6 +489,7 @@ class User(object):
 
                 # The slot comes from explicit/implicit_inform_slots of user.
                 if slot in user_all_inform_slots.keys():
+                    # Agent informed correct slot.
                     if agent_all_inform_slots[slot] == user_all_inform_slots[slot]:
                         if slot in self.state["rest_slots"].keys(): self.state["rest_slots"].pop(slot)
 
@@ -506,6 +517,8 @@ class User(object):
                             else:
                                 self.state["request_slots"]["disease"] = dialogue_configuration.VALUE_UNKNOWN
                                 self.state["action"] = "request"
+
+                    # Agent informed wrong slot-value. In this system this case would never appear.
                     else: # != value  Should we deny here or ?
                         ########################################################################
                         # TODO When agent informs(slot=value), where the value is different with the constraint in user goal, Should we deny or just inform the correct value?
@@ -518,6 +531,8 @@ class User(object):
                             self.state["inform_slots"][slot] = self.goal["goal"]["implicit_inform_slots"][slot]
                         if slot in self.state["rest_slots"]: self.state["rest_slots"].pop(slot)
 
+                # The slot agent informed is not comes from user explicit/implicit slots.
+                # TODO: I think this should deny the wrong informed slot. Attention.
                 else:
                     if slot in self.state["request_slots"].keys(): self.state["request_slots"].pop(slot)
                     if slot in self.state["rest_slots"].keys(): self.state["rest_slots"].pop(slot)
