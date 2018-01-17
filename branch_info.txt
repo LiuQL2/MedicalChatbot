@@ -1,0 +1,1 @@
+[2018-01-17]: The User simulator of this branch was written specifically for diseases identification. This User simulator is still under working and it's performance is still unknown.
