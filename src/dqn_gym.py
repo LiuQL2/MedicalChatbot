@@ -4,19 +4,19 @@ import gym
 import random
 import argparse
 from src.dialogue_system.policy_learning.dqn import DQN
-env = gym.make('CartPole-v0')
-print(env.action_space)
-for i_episode in range(20):
-    observation = env.reset()
-    for t in range(100):
-        # env.render()
-        print(observation)
-        action = env.action_space.sample()
-        observation, reward, done, info = env.step(action)
-        print(reward)
-        if done:
-            print("Episode finished after {} timesteps".format(t+1))
-            break
+# env = gym.make('CartPole-v0')
+# print(env.action_space)
+# for i_episode in range(20):
+#     observation = env.reset()
+#     for t in range(100):
+#         # env.render()
+#         print(observation)
+#         action = env.action_space.sample()
+#         observation, reward, done, info = env.step(action)
+#         print(reward)
+#         if done:
+#             print("Episode finished after {} timesteps".format(t+1))
+#             break
 
 
 class CartPole(object):
