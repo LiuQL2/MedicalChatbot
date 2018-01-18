@@ -22,19 +22,17 @@ class DialogueManager(object):
         self.experience_replay_pool = deque(maxlen=self.parameter.get("experience_replay_pool_size"))
         self.inform_wrong_disease_count = 0
 
-    def next(self):
+    def next(self,train_mode=1):
         # Agent takes action.
         state = self.state_tracker.get_state()
         agent_action, action_index = self.state_tracker.agent.next(state=state,turn=self.state_tracker.turn)
         self.state_tracker.state_updater(agent_action=agent_action)
-        # print("turn:%2d, agent action:" % (self.state_tracker.turn -1) , agent_action)
         # print("turn:%2d, state for agent:\n" % (self.state_tracker.turn -1) , json.dumps(state))
 
         # User takes action.
         user_action, self.episode_over, self.dialogue_status = self.state_tracker.user.next(agent_action=agent_action,turn=self.state_tracker.turn)
         self.state_tracker.state_updater(user_action=user_action)
-        # print("turn:%2d, user  action:" % (self.state_tracker.turn - 1), user_action)
-        # print("turn:%2d, update after user :" % (self.state_tracker.turn - 1), state)
+        # print("turn:%2d, update after user :\n" % (self.state_tracker.turn - 1), json.dumps(state))
 
         if self.state_tracker.turn == self.state_tracker.max_turn:
             self.episode_over = True
@@ -43,25 +41,29 @@ class DialogueManager(object):
             self.inform_wrong_disease_count += 1
 
         reward = self._reward_function()
-        self.record_training_sample(
-            state=state,
-            agent_action=action_index,
-            next_state=self.state_tracker.get_state(),
-            reward=reward,
-            episode_over=self.episode_over
-        )
+        if train_mode == 1:
+            self.record_training_sample(
+                state=state,
+                agent_action=action_index,
+                next_state=self.state_tracker.get_state(),
+                reward=reward,
+                episode_over=self.episode_over
+            )
+        else:
+            pass
 
         return reward
 
-    def initialize(self):
+    def initialize(self,train_mode=1):
         self.state_tracker.initialize()
         self.episode_over = False
         self.inform_wrong_disease_count = 0
         self.dialogue_status = dialogue_configuration.NOT_COME_YET
-        user_action = self.state_tracker.user.initialize()
+        user_action = self.state_tracker.user.initialize(train_mode = train_mode)
         self.state_tracker.state_updater(user_action=user_action)
         self.state_tracker.agent.initialize()
-        # print("turn:%2d, user  action:" % (self.state_tracker.turn - 1), user_action)
+        # print("#"*30 + "\n" + "user goal:\n", json.dumps(self.state_tracker.user.goal))
+        # print("turn:%2d, initialized state:\n" % (self.state_tracker.turn - 1), json.dumps(self.state_tracker.state))
 
     def _reward_function(self):
         if self.dialogue_status == dialogue_configuration.NOT_COME_YET:

@@ -37,7 +37,7 @@ class SlotDumper(object):
     def dump(self, slot_dump_file_name, disease_dump_file_name):
         self._load_slot()
         self.slot_set.add("disease")
-        self.slot_set.add("taskcomplete")
+        # self.slot_set.add("taskcomplete")
 
         slot_set = list(self.slot_set)
         slot_set_dict = {}
@@ -58,6 +58,7 @@ class SlotDumper(object):
             self.disease_symptom[line["name"]]["symptom"] = list(line["symptom"].keys())
             for key in line["symptom"].keys():
                 self.slot_set.add(key)
+            index += 1
         data_file.close()
 
 
@@ -84,11 +85,11 @@ class GoalDumper(object):
 
 if __name__ == "__main__":
     # Action
-    action_file = "./../../../resources/action_set.txt"
-    action_dump_file = "./../data/action_set.p"
-
-    action_dumper = ActionDumper(action_set_file=action_file)
-    action_dumper.dump(dump_file_name=action_dump_file)
+    # action_file = "./../../../resources/action_set.txt"
+    # action_dump_file = "./../data/action_set.p"
+    #
+    # action_dumper = ActionDumper(action_set_file=action_file)
+    # action_dumper.dump(dump_file_name=action_dump_file)
 
     # Slots.
     slots_file = "./../../../resources/top_disease_symptom_aligned.json"
@@ -98,7 +99,7 @@ if __name__ == "__main__":
     slots_dumper.dump(slot_dump_file_name=slots_dump_file,disease_dump_file_name=disease_dump_file)
 
     # Goal
-    goal_file = "./../../../resources/goal_slot_value_0.2.json"
-    goal_dump_file = "./../data/goal_set.p"
-    goal_dumper = GoalDumper(goal_file=goal_file)
-    goal_dumper.dump(dump_file_name=goal_dump_file)
+    # goal_file = "./../../../resources/goal_slot_value_0.2.json"
+    # goal_dump_file = "./../data/goal_set.p"
+    # goal_dumper = GoalDumper(goal_file=goal_file)
+    # goal_dumper.dump(dump_file_name=goal_dump_file)

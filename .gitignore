@@ -7,4 +7,5 @@ log/train/*
 **/*.logs
 **/*.log
 **/*.py[co]
+./log
 

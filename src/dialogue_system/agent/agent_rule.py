@@ -20,10 +20,12 @@ class AgentRule(Agent):
         candidate_disease_symptoms = self._get_candidate_disease_symptoms(state=state)
         disease = candidate_disease_symptoms["disease"]
         candidate_symptoms = candidate_disease_symptoms["candidate_symptoms"]
+
         self.agent_action["request_slots"].clear()
         self.agent_action["explicit_inform_slots"].clear()
         self.agent_action["implicit_inform_slots"].clear()
         self.agent_action["inform_slots"].clear()
+        self.agent_action["turn"] = turn
 
         if len(candidate_symptoms) == 0:
             self.agent_action["action"] = "inform"
@@ -48,7 +50,7 @@ class AgentRule(Agent):
         inform_slots = state["current_slots"]["inform_slots"]
         inform_slots.update(state["current_slots"]["explicit_inform_slots"])
         inform_slots.update(state["current_slots"]["implicit_inform_slots"])
-        # print("current slots of state of turn %2d:" % self.agent_action["turn"], state["current_slots"])
+        wrong_diseases = state["current_slots"]["wrong_diseases"]
 
         # Calculate number of informed symptom for each disease.
         disease_match_number = {}
@@ -75,7 +77,13 @@ class AgentRule(Agent):
             deny_score = float(disease_match_number[disease]["deny"]) / len(self.disease_symptom[disease]["symptom"])
             disease_score[disease] = yes_score - 0.5*not_sure_score - deny_score
 
-        match_disease = max(disease_score.items(), key=lambda x: x[1])[0] # Get the most probable disease that the user have.
+        # Get the most probable disease that has not been wrongly informed
+        sorted_diseases = sorted(disease_score.items(), key=lambda d: d[1], reverse=True)
+        for disease in sorted_diseases:
+            if disease[0] not in wrong_diseases:
+                match_disease = disease[0]
+                break
+        # match_disease = max(disease_score.items(), key=lambda x: x[1])[0] # Get the most probable disease that the user have.
         # Candidate symptom list of symptoms that belong to the most probable disease but have't been informed yet.
         candidate_symptoms = []
         for symptom in self.disease_symptom[match_disease]["symptom"]:

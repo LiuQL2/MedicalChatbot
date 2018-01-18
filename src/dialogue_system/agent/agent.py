@@ -144,6 +144,12 @@ class Agent(object):
             elif current_slots[slot] == dialogue_configuration.I_DENY:
                 current_slots_rep[self.slot_set[slot]] = 2
 
+        # wrong diseases rep.
+        wrong_diseases = state["current_slots"]["wrong_diseases"]
+        wrong_diseases_rep = np.zeros(len(self.disease_symptom.keys()))
+        for disease in wrong_diseases:
+            wrong_diseases_rep[self.disease_symptom[disease]["index"]] = 1
+
         # Turn rep.
         turn_rep = np.zeros(self.parameter["max_turn"])
         turn_rep[state["turn"] - 1] = 1.0
@@ -156,6 +162,7 @@ class Agent(object):
         user_inform_slots = copy.deepcopy(state["user_action"]["inform_slots"])
         user_inform_slots.update(state["user_action"]["explicit_inform_slots"])
         user_inform_slots.update(state["user_action"]["implicit_inform_slots"])
+        if "disease" in user_inform_slots: user_inform_slots.pop("disease")
         user_inform_slots_rep = np.zeros(len(self.slot_set.keys()))
         for slot in user_inform_slots.keys():
             user_inform_slots_rep[self.slot_set[slot]] = 1.0
@@ -174,7 +181,6 @@ class Agent(object):
             pass
 
         # Agent last inform slots rep.
-
         agent_inform_slots_rep = np.zeros(len(self.slot_set.keys()))
         try:
            agent_inform_slots = copy.deepcopy(state["agent_action"]["inform_slots"])
@@ -194,7 +200,8 @@ class Agent(object):
         except:
             pass
 
-        state_rep = np.hstack((current_slots_rep,user_action_rep, user_inform_slots_rep, user_request_slots_rep, agent_action_rep, agent_inform_slots_rep, agent_request_slots_rep, turn_rep))
+        state_rep = np.hstack((current_slots_rep, wrong_diseases_rep, user_action_rep, user_inform_slots_rep, user_request_slots_rep, agent_action_rep, agent_inform_slots_rep, agent_request_slots_rep, turn_rep))
+        # state_rep = np.hstack((current_slots_rep, user_action_rep, user_inform_slots_rep, user_request_slots_rep, agent_action_rep, agent_inform_slots_rep, agent_request_slots_rep, turn_rep))
         return state_rep
 
     def _build_action_space(self):
@@ -205,21 +212,18 @@ class Agent(object):
         """
 
         feasible_actions = [
-            #   greeting actions
-            # {'action':"greeting", 'inform_slots':{}, 'request_slots':{}},
-            #   confirm_question actions
             {'action': "confirm_question", 'inform_slots': {}, 'request_slots': {},"explicit_inform_slots":{}, "implicit_inform_slots":{}},
-            #   confirm_answer actions
             {'action': "confirm_answer", 'inform_slots': {}, 'request_slots': {},"explicit_inform_slots":{}, "implicit_inform_slots":{}},
-            #   thanks actions
-            {'action': "thanks", 'inform_slots': {}, 'request_slots': {},"explicit_inform_slots":{}, "implicit_inform_slots":{}},
-            #   deny actions
             {'action': "deny", 'inform_slots': {}, 'request_slots': {},"explicit_inform_slots":{}, "implicit_inform_slots":{}},
+            {'action': dialogue_configuration.CLOSE_DIALOGUE, 'inform_slots': {}, 'request_slots': {},"explicit_inform_slots":{}, "implicit_inform_slots":{}},
+            {'action': dialogue_configuration.THANKS, 'inform_slots': {}, 'request_slots': {}, "explicit_inform_slots": {}, "implicit_inform_slots": {}}
         ]
         #   Adding the inform actions and request actions.
         for slot in self.slot_set.keys():
-            feasible_actions.append({'action': 'inform', 'inform_slots': {slot: True}, 'request_slots': {}, "explicit_inform_slots":{}, "implicit_inform_slots":{}})
             feasible_actions.append({'action': 'request', 'inform_slots': {}, 'request_slots': {slot: dialogue_configuration.VALUE_UNKNOWN},"explicit_inform_slots":{}, "implicit_inform_slots":{}})
+            if slot != "disease":
+                feasible_actions.append({'action': 'inform', 'inform_slots': {slot: True}, 'request_slots': {}, "explicit_inform_slots":{}, "implicit_inform_slots":{}})
+
 
         # Diseases as actions.
         for disease in self.disease_symptom.keys():
