@@ -33,27 +33,21 @@ class RunningSteward(object):
 
     def simulate(self, agent, episodes, train=0):
         self.dialogue_manager.set_agent(agent=agent)
-        # if train == 1:
-        #     for train_index in range(0,10,1):
-        #         self.dialogue_manager.train()
-        #         self.dialogue_manager.state_tracker.agent.dqn.update_target_network()
-        #         print("%2d / %d training dqn using warm start experience buffer."%(train_index,50))
-
-
         for index in range(0, episodes,1):
-            # Trainning Agent with experience replay
+            # Training Agent with experience replay
             if train == 1:
                 self.dialogue_manager.train()
                 self.dialogue_manager.state_tracker.agent.dqn.update_target_network()
 
             result = self.simulation_epoch(index)
+            result = self.evaluate_model(index)
 
             if result["success_rate"] >= self.best_result["success_rate"] and \
                     result["success_rate"] > dialogue_configuration.SUCCESS_RATE_THRESHOLD and \
                     result["average_wrong_disease"] <= self.best_result["average_wrong_disease"] and train==1:
                 self.dialogue_manager.experience_replay_pool = deque(maxlen=self.parameter.get("experience_replay_pool_size"))
                 self.simulation_epoch(index)
-                self.dialogue_manager.state_tracker.agent.dqn.save_model(model_performance=result, episodes_index = index)
+                # self.dialogue_manager.state_tracker.agent.dqn.save_model(model_performance=result, episodes_index = index)
                 print("The model was saved.")
                 self.best_result = copy.deepcopy(result)
 
@@ -73,7 +67,7 @@ class RunningSteward(object):
         total_truns = 0
         inform_wrong_disease_count = 0
         for epoch_index in range(0,self.epoch_size, 1):
-            self.dialogue_manager.initialize()
+            self.dialogue_manager.initialize(train_mode=self.parameter.get("train_mode"))
             while self.dialogue_manager.episode_over == False:
                 reward = self.dialogue_manager.next()
                 total_reward += reward
@@ -86,12 +80,38 @@ class RunningSteward(object):
         average_turn = float(total_truns) / self.epoch_size
         average_wrong_disease = float(inform_wrong_disease_count) / self.epoch_size
         res = {"success_rate":success_rate, "average_reward": average_reward, "average_turn": average_turn, "average_wrong_disease":average_wrong_disease}
+        # print("%3d simulation success rate %s, ave reward %s, ave turns %s, ave wrong disease %s" % (index,res['success_rate'], res['average_reward'], res['average_turn'], res["average_wrong_disease"]))
+        return res
+
+    def evaluate_model(self,index):
+        train_mode = 0
+        success_count = 0
+        total_reward = 0
+        total_truns = 0
+        evaluate_epoch_size = 1000
+        inform_wrong_disease_count = 0
+        for epoch_index in range(0,evaluate_epoch_size, 1):
+            self.dialogue_manager.initialize(train_mode=train_mode)
+            while self.dialogue_manager.episode_over == False:
+                reward = self.dialogue_manager.next(train_mode=train_mode)
+                total_reward += reward
+            total_truns += self.dialogue_manager.state_tracker.turn
+            inform_wrong_disease_count += self.dialogue_manager.inform_wrong_disease_count
+            if self.dialogue_manager.dialogue_status == dialogue_configuration.DIALOGUE_SUCCESS:
+                success_count += 1
+        success_rate = float(success_count) / evaluate_epoch_size
+        average_reward = float(total_reward) / evaluate_epoch_size
+        average_turn = float(total_truns) / evaluate_epoch_size
+        average_wrong_disease = float(inform_wrong_disease_count) / evaluate_epoch_size
+        res = {"success_rate":success_rate, "average_reward": average_reward, "average_turn": average_turn, "average_wrong_disease":average_wrong_disease}
         print("%3d simulation success rate %s, ave reward %s, ave turns %s, ave wrong disease %s" % (index,res['success_rate'], res['average_reward'], res['average_turn'], res["average_wrong_disease"]))
         return res
 
     def warm_start(self, agent, episode_size):
         self.dialogue_manager.set_agent(agent=agent)
         for index in range(0,episode_size,1):
-            self.simulation_epoch(index)
+            res = self.simulation_epoch(index)
+            print("%3d simulation success rate %s, ave reward %s, ave turns %s, ave wrong disease %s" % (
+            index, res['success_rate'], res['average_reward'], res['average_turn'], res["average_wrong_disease"]))
             if len(self.dialogue_manager.experience_replay_pool)==self.parameter.get("experience_replay_pool_size"):
                 break
