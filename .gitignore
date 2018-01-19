@@ -1,14 +1,13 @@
 .idea/
-resources/
+resources/*
 others/
 src/dialogue_system/data/*
 log/train/*
-**/*/*/__pycache__
-**/*/__pycache__
-**/__pycache__
-**/*/*/__pycache__
 **/*.logs
 **/*.log
 **/*.py[co]
 ./log
 
+**/**/**/*.py[co]
+**/__pycache__/
+**/**/__pycache__/
