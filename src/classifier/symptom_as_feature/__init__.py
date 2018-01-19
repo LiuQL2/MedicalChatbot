@@ -1,1 +1,1 @@
-from .symptom_as_feature import *
+from .symptom_classifier import *

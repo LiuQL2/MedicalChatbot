@@ -76,10 +76,19 @@ class GoalDumper(object):
         data_file.close()
         goal_number = len(self.goal_set)
         data_set = {
-            "train": random.sample(self.goal_set, int(goal_number*train)),
-            "test": random.sample(self.goal_set, int(goal_number*test)),
-            "validate": random.sample(self.goal_set, int(goal_number*validate))
+            "train":[],
+            "test":[],
+            "validate":[]
         }
+
+        for goal in self.goal_set:
+            random_float = random.random()
+            if random_float <= train:
+                data_set["train"].append(goal)
+            elif train < random_float and random_float <= train+test:
+                data_set["test"].append(goal)
+            else:
+                data_set["validate"].append(goal)
         pickle.dump(file=open(dump_file_name,"wb"), obj=data_set)
 
 
@@ -92,14 +101,14 @@ if __name__ == "__main__":
     # action_dumper.dump(dump_file_name=action_dump_file)
 
     # Slots.
-    slots_file = "./../../../resources/top_disease_symptom_aligned.json"
-    slots_dump_file = "./../data/slot_set.p"
-    disease_dump_file = "./../data/disease_symptom.p"
-    slots_dumper = SlotDumper(slots_file=slots_file)
-    slots_dumper.dump(slot_dump_file_name=slots_dump_file,disease_dump_file_name=disease_dump_file)
+    # slots_file = "./../../../resources/top_disease_symptom_aligned.json"
+    # slots_dump_file = "./../data/slot_set.p"
+    # disease_dump_file = "./../data/disease_symptom.p"
+    # slots_dumper = SlotDumper(slots_file=slots_file)
+    # slots_dumper.dump(slot_dump_file_name=slots_dump_file,disease_dump_file_name=disease_dump_file)
 
     # Goal
-    # goal_file = "./../../../resources/goal_slot_value_0.2.json"
-    # goal_dump_file = "./../data/goal_set.p"
-    # goal_dumper = GoalDumper(goal_file=goal_file)
-    # goal_dumper.dump(dump_file_name=goal_dump_file)
+    goal_file = "./../../../resources/goal_slot_value_0.2.json"
+    goal_dump_file = "./../data/goal_set.p"
+    goal_dumper = GoalDumper(goal_file=goal_file)
+    goal_dumper.dump(dump_file_name=goal_dump_file)
