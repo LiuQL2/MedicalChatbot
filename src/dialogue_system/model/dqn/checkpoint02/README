@@ -1,6 +1,0 @@
-This models were trained using the first random division of user_goal, which train:test:validation = 8:2;
-The train set, test set and validation are different at different division, so it is not a good idea to evaluate this models with test set of new division.
-
-The user agent informs all explicit slots at first.
-
-REWARD_FOR_DIALOGUE_SUCCESS = 1000

@@ -45,7 +45,7 @@ class DQN(object):
                 self.update_target_bias = tf.assign(self.target_bias, self.current_bias.value())
 
                 # Optimization.
-                self.loss = tf.reduce_mean(tf.reduce_sum(tf.square(self.target_value - self.current_output)),name="loss")
+                self.loss = tf.reduce_mean(tf.reduce_sum(tf.square(self.target_value - self.current_output),axis=1),name="loss")
                 self.optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.001).minimize(loss=self.loss)
                 self.initializer = tf.global_variables_initializer()
                 self.model_saver = tf.train.Saver()

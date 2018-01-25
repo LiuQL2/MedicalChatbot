@@ -1,4 +1,0 @@
-model_checkpoint_path: "model_s0.752_r-173.1_t9.59_wd2.476_e2.ckpt"
-all_model_checkpoint_paths: "model_s0.459_r-498.3_t14.046_wd5.432_e0.ckpt"
-all_model_checkpoint_paths: "model_s0.646_r-284.9_t11.228_wd3.481_e1.ckpt"
-all_model_checkpoint_paths: "model_s0.752_r-173.1_t9.59_wd2.476_e2.ckpt"

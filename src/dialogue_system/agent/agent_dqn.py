@@ -6,15 +6,10 @@ Agent will choose the first symptom with request as the agent action aiming to a
 model will change if the user's answer is no in continual several times.
 """
 
-import numpy as np
-import copy
 import random
-import json
 import sys, os
-from collections import deque
 sys.path.append(os.getcwd().replace("src/dialogue_system/agent",""))
 
-from src.dialogue_system import dialogue_configuration
 from src.dialogue_system.policy_learning import DQN
 from src.dialogue_system.agent.agent import Agent
 
@@ -44,5 +39,8 @@ class AgentDQN(Agent):
         return agent_action, action_index
 
     def train(self, batch):
-        return self.dqn.singleBatch(batch=batch,params=self.parameter)
+        loss = self.dqn.singleBatch(batch=batch,params=self.parameter)
+        return loss
 
+    def update_target_network(self):
+        self.dqn.update_target_network()

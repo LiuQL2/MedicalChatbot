@@ -424,3 +424,6 @@ class User(object):
             if slot not in informed_slots:
                 return False
         return True
+
+    def get_goal(self):
+        return self.goal

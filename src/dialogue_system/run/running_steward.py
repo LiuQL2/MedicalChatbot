@@ -11,6 +11,7 @@ sys.path.append(os.getcwd().replace("src/dialogue_system/run",""))
 
 from src.dialogue_system.agent import AgentRule
 from src.dialogue_system.agent import AgentDQN
+from src.dialogue_system.agent import AgentActorCritic
 from src.dialogue_system.user_simulator import UserRule as User
 from src.dialogue_system.dialogue_manager import DialogueManager
 from src.dialogue_system import dialogue_configuration
@@ -24,6 +25,7 @@ class RunningSteward(object):
         self.action_set = pickle.load(file=open(parameter["action_set"], "rb"))
         self.goal_set = pickle.load(file=open(parameter["goal_set"], "rb"))
         self.disease_symptom = pickle.load(file=open(parameter["disease_symptom"], "rb"))
+        self.learning_curve = {}
 
         user = User(goal_set=self.goal_set, action_set=self.action_set, parameter=parameter)
         agent = AgentRule(action_set=self.action_set, slot_set=self.slot_set, disease_symptom=self.disease_symptom, parameter=parameter)
@@ -34,39 +36,36 @@ class RunningSteward(object):
     def simulate(self, agent, episodes, train=0):
         self.dialogue_manager.set_agent(agent=agent)
         for index in range(0, episodes,1):
-            # Training Agent with experience replay
-            if train == 1:
+            # Training AgentDQN with experience replay
+            if train == 1 and isinstance(self.dialogue_manager.state_tracker.agent, AgentDQN):
                 self.dialogue_manager.train()
-                self.dialogue_manager.state_tracker.agent.dqn.update_target_network()
+                # Simulating and filling experience replay pool.
+                self.simulation_epoch(epoch_size=self.epoch_size)
+            # Training AgentActorCritic with sampling one trajectory.
+            elif train == 1 and isinstance(self.dialogue_manager.state_tracker.agent, AgentActorCritic):
+                # Sample one trajectory for training.
+                # for _i in range(self.epoch_size):
+                    self.simulation_epoch(epoch_size=self.epoch_size)
+                    self.dialogue_manager.train()
 
-            result = self.simulation_epoch(index)
+
+            # Evaluating the model.
             result = self.evaluate_model(index)
-
             if result["success_rate"] >= self.best_result["success_rate"] and \
                     result["success_rate"] > dialogue_configuration.SUCCESS_RATE_THRESHOLD and \
                     result["average_wrong_disease"] <= self.best_result["average_wrong_disease"] and train==1:
                 self.dialogue_manager.experience_replay_pool = deque(maxlen=self.parameter.get("experience_replay_pool_size"))
-                self.simulation_epoch(index)
+                self.simulation_epoch(epoch_size=self.epoch_size)
                 # self.dialogue_manager.state_tracker.agent.dqn.save_model(model_performance=result, episodes_index = index)
                 print("The model was saved.")
                 self.best_result = copy.deepcopy(result)
 
-            # if result["success_rate"] >= self.best_result["success_rate"] and \
-            #             result["average_wrong_disease"] <= dialogue_configuration.AVERAGE_WRONG_DISEASE:
-            #     self.best_result = copy.deepcopy(result)
-            #     if isinstance(self.dialogue_manager.state_tracker.agent, AgentDQN):
-            #         self.dialogue_manager.state_tracker.agent.dqn.update_target_network()
-            #         print("Target network was updated.")
-            #         time.sleep(10)
-            #     else:
-            #         pass
-
-    def simulation_epoch(self,index):
+    def simulation_epoch(self, epoch_size):
         success_count = 0
         total_reward = 0
         total_truns = 0
         inform_wrong_disease_count = 0
-        for epoch_index in range(0,self.epoch_size, 1):
+        for epoch_index in range(0,epoch_size, 1):
             self.dialogue_manager.initialize(train_mode=self.parameter.get("train_mode"))
             while self.dialogue_manager.episode_over == False:
                 reward = self.dialogue_manager.next()
@@ -84,11 +83,12 @@ class RunningSteward(object):
         return res
 
     def evaluate_model(self,index):
+        save_performance = self.parameter.get("save_performance")
         train_mode = 0
         success_count = 0
         total_reward = 0
         total_truns = 0
-        evaluate_epoch_size = 1000
+        evaluate_epoch_size = self.parameter.get("evaluate_epoch_size")
         inform_wrong_disease_count = 0
         for epoch_index in range(0,evaluate_epoch_size, 1):
             self.dialogue_manager.initialize(train_mode=train_mode)
@@ -104,14 +104,21 @@ class RunningSteward(object):
         average_turn = float(total_truns) / evaluate_epoch_size
         average_wrong_disease = float(inform_wrong_disease_count) / evaluate_epoch_size
         res = {"success_rate":success_rate, "average_reward": average_reward, "average_turn": average_turn, "average_wrong_disease":average_wrong_disease}
+        self.learning_curve.setdefault(index, dict())
+        self.learning_curve[index]["success_rate"]=success_rate
+        self.learning_curve[index]["average_reward"]=average_reward
+        self.learning_curve[index]["average_wrong_disease"]=average_wrong_disease
+        if index % 10 == 0 and save_performance == 1:
+            pickle.dump(file=open(self.parameter.get("performance_save_path") + "learning_rate_e" + str(index) + ".p", "wb"), obj=self.learning_curve)
         print("%3d simulation success rate %s, ave reward %s, ave turns %s, ave wrong disease %s" % (index,res['success_rate'], res['average_reward'], res['average_turn'], res["average_wrong_disease"]))
         return res
 
     def warm_start(self, agent, episode_size):
+        agent_id = self.parameter.get("agent_id")
         self.dialogue_manager.set_agent(agent=agent)
         for index in range(0,episode_size,1):
-            res = self.simulation_epoch(index)
+            res = self.simulation_epoch(epoch_size=self.epoch_size)
             print("%3d simulation success rate %s, ave reward %s, ave turns %s, ave wrong disease %s" % (
             index, res['success_rate'], res['average_reward'], res['average_turn'], res["average_wrong_disease"]))
-            if len(self.dialogue_manager.experience_replay_pool)==self.parameter.get("experience_replay_pool_size"):
-                break
+            # if len(self.dialogue_manager.experience_replay_pool)==self.parameter.get("experience_replay_pool_size"):
+            #     break

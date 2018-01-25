@@ -1,6 +1,0 @@
-model_checkpoint_path: "model_s0.87_r596.0_t9.38_wd2.74.ckpt"
-all_model_checkpoint_paths: "model_s0.61_r-119.0_t18.0_wd7.26.ckpt"
-all_model_checkpoint_paths: "model_s0.72_r162.0_t14.8_wd5.58.ckpt"
-all_model_checkpoint_paths: "model_s0.82_r397.0_t12.36_wd4.23.ckpt"
-all_model_checkpoint_paths: "model_s0.86_r549.0_t10.24_wd3.11.ckpt"
-all_model_checkpoint_paths: "model_s0.87_r596.0_t9.38_wd2.74.ckpt"
