@@ -13,9 +13,10 @@ import Levenshtein
 
 class SymptomAligner(object):
     """
-    Aligning spoken symptom with writing symptom.
+    Aligning spoken symptom on writing symptom.
     """
-    def __init__(self, aligned_symptom_file, threshold):
+    def __init__(self, aligned_symptom_file, threshold, hand_crafted_symptom=True):
+        self.hand_crafted_symptom = hand_crafted_symptom
         self.threshold = threshold
         self.aligned_symptom = dict()
         data_file = open(aligned_symptom_file, "r", encoding="utf-8")
@@ -33,13 +34,18 @@ class SymptomAligner(object):
         :return: writing symptom aligned with the spoken_symptom.
         """
         similarity_score = {}
-        for disease in self.aligned_symptom.keys():
-            for key, value in self.aligned_symptom[disease]["symptom"].items():
-                similarity_score[key] = Levenshtein.ratio(spoken_symptom.replace("小儿", ""), key.replace("小儿", ""))
-                for symptom in value:
-                    score = Levenshtein.ratio(spoken_symptom.replace("小儿", ""), symptom.replace("小儿", ""))
-                    if score > similarity_score[key]:
-                        similarity_score[key] = score
+        if self.hand_crafted_symptom == True:
+            for disease in self.aligned_symptom.keys():
+                for key, value in self.aligned_symptom[disease]["symptom"].items():
+                    similarity_score[key] = Levenshtein.ratio(spoken_symptom.replace("小儿", ""), key.replace("小儿", ""))
+                    for symptom in value:
+                        score = Levenshtein.ratio(spoken_symptom.replace("小儿", ""), symptom.replace("小儿", ""))
+                        if score > similarity_score[key]:
+                            similarity_score[key] = score
+        else:
+            for disease in self.aligned_symptom.keys():
+                for symptom in self.aligned_symptom[disease]["symptom"]:
+                    similarity_score[symptom] = Levenshtein.ratio(spoken_symptom.replace("小儿", ""), symptom.replace("小儿", ""))
 
             # for key, value in self.aligned_symptom[disease]["src_symptom"].items():
             #     score = Levenshtein.ratio(spoken_symptom.replace("小儿", ""), key.replace("小儿", ""))
@@ -54,9 +60,10 @@ class SymptomAligner(object):
 
 
 class DataLoader(object):
-    def __init__(self,threshold):
-        self.symptom_aligner = SymptomAligner("./../resources/top_disease_symptom_aligned.json", threshold=threshold)
+    def __init__(self,threshold, disease_symptom_aligned_file, hand_crafted_symptom):
+        self.symptom_aligner = SymptomAligner(disease_symptom_aligned_file, threshold=threshold,hand_crafted_symptom=hand_crafted_symptom)
         self.sample = {}
+        self.symptom_slots = set()
 
     def load_self_report(self, self_report_file):
         """
@@ -120,9 +127,11 @@ class DataLoader(object):
 
             for spoken_symptom, writing_symptom in value["explicit_inform_slots"].items():
                 line["goal"]["explicit_inform_slots"][writing_symptom] = True
+                self.symptom_slots.add(writing_symptom)
             for spoken_symptom, writing_symptom in value["implicit_inform_slots"].items():
                 if writing_symptom in line["goal"]["explicit_inform_slots"].keys(): continue
                 line["goal"]["implicit_inform_slots"][writing_symptom] = True
+                self.symptom_slots.add(writing_symptom)
             data_file.write(json.dumps(line) + "\n")
         data_file.close()
 
@@ -131,11 +140,19 @@ class DataLoader(object):
         data_file.write(json.dumps(self.sample) + "\n")
         data_file.close()
 
+    def write_slots(self, file_name):
+        data_file = open(file_name, mode="w",encoding="utf-8")
+        for symptom in self.symptom_slots:
+            data_file.write(symptom + "\n")
+        data_file.close()
+
+
 
 if __name__ == "__main__":
     threshold = 0.2
-    report_loader = DataLoader(threshold=threshold)
-    report_loader.load_self_report("./../resources/top_self-report_extracted_symptom.csv")
+    disease_symptom_aligned_file = "./../resources/top_disease_symptom_aligned.json"
+    report_loader = DataLoader(threshold=threshold,disease_symptom_aligned_file=disease_symptom_aligned_file)
+    report_loader.load_self_report("./../resources/top_self_report_extracted_symptom.csv")
     print("Conversation:")
     time.sleep(5)
     report_loader.load_conversation("/Users/qianlong/Documents/Qianlong/Research/MedicalChatbot/origin_file/conversation_symptom.txt")

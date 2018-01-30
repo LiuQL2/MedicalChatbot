@@ -15,6 +15,9 @@ from src.dialogue_system import dialogue_configuration
 
 
 class Agent(object):
+    """
+    Basic class of agent.
+    """
     def __init__(self, action_set, slot_set, disease_symptom, parameter):
         self.action_set = action_set
         self.slot_set = slot_set
@@ -34,6 +37,10 @@ class Agent(object):
         }
 
     def initialize(self):
+        """
+        Initializing an dialogue session.
+        :return: nothing to return.
+        """
         self.candidate_disease_list = []
         self.candidate_symptom_list = []
         self.agent_action = {
@@ -47,10 +54,22 @@ class Agent(object):
         }
 
     def next(self, state, turn):
-        # Take action based on different methods, e.g., DQN-based AgentDQN, rule-based AgentRule
+        """
+        Taking action based on different methods, e.g., DQN-based AgentDQN, rule-based AgentRule.
+        Detail codes will be implemented in different sub-class of this class.
+        :param state: a vector, the representation of current dialogue state.
+        :param turn: int, the time step of current dialogue session.
+        :return: a tuple consists of the selected agent action and action index.
+        """
         return self.agent_action
 
     def train(self, batch):
+        """
+        Training the agent.
+        Detail codes will be implemented in different sub-class of this class.
+        :param batch: the sample used to training.
+        :return:
+        """
         pass
 
     def state_to_representation_history(self, state):

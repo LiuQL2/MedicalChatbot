@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+"""
+根据top disease文件中的consult id，从主诉症状文件、对话内容症状抽取口语表达的症状。
+"""
 
 import csv
 import pandas as pd
@@ -8,10 +11,15 @@ class SelfReportSymptomExtractor(object):
     def __init__(self):
         self.symptom = {}
         self.symptom["上呼吸道感染"] = set()
-        self.symptom["小儿发热"] = set()
         self.symptom["小儿支气管炎"] = set()
         self.symptom["小儿腹泻"] = set()
         self.symptom["小儿消化不良"] = set()
+        self.symptom["小儿感冒"] = set()
+        self.symptom["小儿咳嗽"] = set()
+        self.symptom["新生儿黄疸"] = set()
+        self.symptom["小儿便秘"] = set()
+        self.symptom["急性支气管炎"] = set()
+        self.symptom["小儿支气管肺炎"] = set()
 
     def extract(self, file_name):
         reader = csv.reader(open(file_name, encoding="utf-8", mode="r"))
@@ -37,10 +45,15 @@ class ConversationSymptomExtractor(object):
     def __init__(self):
         self.symptom={}
         self.symptom["上呼吸道感染"] = set()
-        self.symptom["小儿发热"] = set()
         self.symptom["小儿支气管炎"] = set()
         self.symptom["小儿腹泻"] = set()
         self.symptom["小儿消化不良"] = set()
+        self.symptom["小儿感冒"] = set()
+        self.symptom["小儿咳嗽"] = set()
+        self.symptom["新生儿黄疸"] = set()
+        self.symptom["小儿便秘"] = set()
+        self.symptom["急性支气管炎"] = set()
+        self.symptom["小儿支气管肺炎"] = set()
 
     def extract(self,consult_id_file, from_file):
         self.data = pd.read_csv(consult_id_file,header=None,)
@@ -69,27 +82,25 @@ class ConversationSymptomExtractor(object):
         writer = csv.writer(open(save_file, encoding="utf-8", mode="w"))
         for key in self.symptom.keys():
             for symptom in self.symptom[key]:
-                # writer.writerow([key] + list(self.symptom[key]))
+                writer.writerow([key] + list(self.symptom[key]))
                 writer.writerow([key,symptom])
 
 
 
 
 if __name__ == "__main__":
-    # Extracting symptoms from query file.
-    # top_disease_symptom_file = "./../resources/top_disease_symptom.csv"
-    # save_file = "./../resources/symptom.csv"
-    # extractor = SelfReportSymptomExtractor()
-    # extractor.extract(file_name=top_disease_symptom_file)
-    # extractor.save(save_file)
+    # # Extracting symptoms from self-report.
+    top_disease_symptom_file = "./../resources/top_self_report_extracted_symptom.csv"
+    save_file = "./../resources/top_symptom_self_report.csv"
+    extractor = SelfReportSymptomExtractor()
+    extractor.extract(file_name=top_disease_symptom_file)
+    extractor.save(save_file)
 
 
     # Extracting symptoms from conversations.
-    consult_id_file = "./../resources/top_disease_symptom.csv"
-    conversation_file = "/Users/qianlong/Documents/Qianlong/Research/MedicalChatbot/origin_file/dialog_result"
-    save_file = "./../resources/symptom_conversation.csv"
+    consult_id_file = "./../resources/top_self_report_extracted_symptom.csv"
+    conversation_file = "/Users/qianlong/Documents/Qianlong/Research/MedicalChatbot/origin_file/conversation_symptom.txt"
+    save_file = "./../resources/top_symptom_conversation.csv"
     extractor = ConversationSymptomExtractor()
     extractor.extract(consult_id_file=consult_id_file,from_file=conversation_file)
     extractor.save(save_file=save_file)
-
-

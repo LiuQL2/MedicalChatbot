@@ -3,6 +3,7 @@
 使用主诉里面获得症状进行分类，把疾病判断看成一个分类任务；
 """
 
+import copy
 import numpy as np
 import tensorflow as tf
 import sys, os
@@ -152,7 +153,7 @@ class SymptomClassifier(object):
                 for symptom in goal["goal"]["implicit_inform_slots"].keys():
                     symptom_rep[self.symptom_to_index[symptom]] = 1
             if len(batch["x"]) == batch_size:
-                data_set["train"].append(batch)
+                data_set["train"].append(copy.deepcopy(batch))
                 batch["x"] = []
                 batch["y"] = []
             else:
@@ -169,8 +170,8 @@ class SymptomClassifier(object):
                 for symptom in goal["goal"]["implicit_inform_slots"].keys():
                     symptom_rep[self.symptom_to_index[symptom]] = 1
 
-            data_set["test"]["x"].append(symptom_rep)
-            data_set["test"]["y"].append(disease_rep)
+            data_set["test"]["x"].append(copy.deepcopy(symptom_rep))
+            data_set["test"]["y"].append(copy.deepcopy(disease_rep))
         self.data_set = data_set
 
     def train_sklearn_svm(self):

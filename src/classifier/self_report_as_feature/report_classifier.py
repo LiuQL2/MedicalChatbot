@@ -2,6 +2,7 @@
 """
 使用主诉内容进行分类，word embedding of n-grams.
 """
+import copy
 import tensorflow as tf
 import time
 from sklearn import svm
@@ -131,13 +132,13 @@ class Corpus(object):
 
             random_float = random.random()
             if random_float <= train:
-                self.data_set["train"]["x"].append(text_rep)
-                self.data_set["train"]["word_index"].append(data["text"])
-                self.data_set["train"]["y"].append(data["disease"])
+                self.data_set["train"]["x"].append(copy.deepcopy(text_rep))
+                self.data_set["train"]["word_index"].append(copy.deepcopy(data["text"]))
+                self.data_set["train"]["y"].append(copy.deepcopy(data["disease"]))
             else:
-                self.data_set["test"]["x"].append(text_rep)
-                self.data_set["test"]["word_index"].append(data["text"])
-                self.data_set["test"]["y"].append(data["disease"])
+                self.data_set["test"]["x"].append(copy.deepcopy(text_rep))
+                self.data_set["test"]["word_index"].append(copy.deepcopy(data["text"]))
+                self.data_set["test"]["y"].append(copy.deepcopy(data["disease"]))
 
     def _load_stop_words(self,stop_words_file):
         """
@@ -153,6 +154,6 @@ class Corpus(object):
 
 
 if __name__ == "__main__":
-    data_file = "./../../../resources/top_self-report_extracted_symptom.csv"
+    data_file = "./../../../resources/top_self_report_extracted_symptom.csv"
     stop_words = "./data/stopwords.txt"
     classifier = ReportClassifier(stop_words=stop_words,data_file=data_file)

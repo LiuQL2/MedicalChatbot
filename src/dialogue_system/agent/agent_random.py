@@ -17,7 +17,7 @@ class AgentRandom(Agent):
 
     def next(self, state,turn):
         self.agent_action["turn"] = turn
-        action_index = random.randint(0, len(self.action_sapce))
+        action_index = random.randint(0, len(self.action_sapce)-1)
         agent_action = self.action_sapce[action_index]
         agent_action["turn"] = turn
         agent_action["speaker"] = "agent"

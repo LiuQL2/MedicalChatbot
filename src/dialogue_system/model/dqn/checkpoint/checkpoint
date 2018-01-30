@@ -1,6 +1,2 @@
-model_checkpoint_path: "model_s0.796_r-46.05_t7.463_wd1.253_e30.ckpt"
-all_model_checkpoint_paths: "model_s0.777_r-90.15_t7.704_wd1.6695_e13.ckpt"
-all_model_checkpoint_paths: "model_s0.788_r-76.65_t7.584_wd1.547_e14.ckpt"
-all_model_checkpoint_paths: "model_s0.7885_r-58.5_t7.656_wd1.3665_e22.ckpt"
-all_model_checkpoint_paths: "model_s0.79_r-51.95_t7.502_wd1.303_e25.ckpt"
-all_model_checkpoint_paths: "model_s0.796_r-46.05_t7.463_wd1.253_e30.ckpt"
+model_checkpoint_path: "model_s0.3135_r-409.4_t29.624_wd4.4005_e0.ckpt"
+all_model_checkpoint_paths: "model_s0.3135_r-409.4_t29.624_wd4.4005_e0.ckpt"

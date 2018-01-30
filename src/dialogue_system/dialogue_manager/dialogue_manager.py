@@ -17,6 +17,9 @@ from src.dialogue_system.user_simulator import UserRule as User
 
 
 class DialogueManager(object):
+    """
+    Dialogue manager of this dialogue system.
+    """
     def __init__(self, user, agent, parameter):
         self.state_tracker = StateTracker(user=user, agent=agent, parameter=parameter)
         self.parameter = parameter
@@ -30,6 +33,12 @@ class DialogueManager(object):
         self.save_dialogue = parameter.get("save_dialogue")
 
     def next(self,train_mode=1):
+        """
+        The next two turn of this dialogue session. The agent will take action first and then followed by user simulator.
+        :param train_mode: int, 1: the purpose of simulation is to train the model, 0: just for simulation and the
+                           parameters of the model will not be updated.
+        :return: immediate reward for taking this agent action.
+        """
         # Agent takes action.
         state = self.state_tracker.get_state()
         agent_action, action_index = self.state_tracker.agent.next(state=state,turn=self.state_tracker.turn)

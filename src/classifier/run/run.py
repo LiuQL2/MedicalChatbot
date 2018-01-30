@@ -4,7 +4,7 @@ import time
 import argparse
 import pickle
 import sys, os
-sys.path.append(os.getcwd().replace("src/dialogue_system/run",""))
+sys.path.append(os.getcwd().replace("src/classifier/run",""))
 
 from src.classifier.symptom_as_feature.symptom_classifier import SymptomClassifier
 from src.classifier.self_report_as_feature.report_classifier import ReportClassifier
@@ -37,14 +37,14 @@ def run():
     classifier.train_sklearn_svm()
     classifier.evaluate_sklearn_svm()
 
-    print("##"*30+"\nSelf-report as features\n"+"##"*30)
-    data_file = "./../../../resources/top_self-report_extracted_symptom.csv"
-    stop_words = "./../data/stopwords.txt"
-    report_classifier = ReportClassifier(stop_words=stop_words,data_file=data_file)
-    report_classifier.train_tf()
-    report_classifier.evaluate_tf()
-    report_classifier.train_sklearn_svm()
-    report_classifier.evaluate_sklearn_svm()
+    # print("##"*30+"\nSelf-report as features\n"+"##"*30)
+    # data_file = "./../../../resources/top_self_report_extracted_symptom.csv"
+    # stop_words = "./../data/stopwords.txt"
+    # report_classifier = ReportClassifier(stop_words=stop_words,data_file=data_file)
+    # report_classifier.train_tf()
+    # report_classifier.evaluate_tf()
+    # report_classifier.train_sklearn_svm()
+    # report_classifier.evaluate_sklearn_svm()
 
 
 if __name__ == "__main__":

@@ -10,16 +10,25 @@ import random
 import sys, os
 sys.path.append(os.getcwd().replace("src/dialogue_system/agent",""))
 
-from src.dialogue_system.policy_learning import DQN
 from src.dialogue_system.agent.agent import Agent
 
 
 class AgentDQN(Agent):
     def __init__(self, action_set, slot_set, disease_symptom, parameter):
         super(AgentDQN, self).__init__(action_set=action_set, slot_set=slot_set,disease_symptom=disease_symptom,parameter=parameter)
-        input_size = parameter.get("input_size_dqn", 182)
+        input_size = parameter.get("input_size_dqn")
         hidden_size = parameter.get("hidden_size_dqn", 100)
         output_size = len(self.action_sapce)
+        dqn_id = self.parameter.get("dqn_id")
+        if dqn_id == 0:
+            from src.dialogue_system.policy_learning.dqn import DQN0 as DQN
+        elif dqn_id == 1:
+            from src.dialogue_system.policy_learning.dqn import DQN1 as DQN
+        elif dqn_id == 2:
+            from src.dialogue_system.policy_learning.dqn import DQN2 as DQN
+        elif dqn_id == 3:
+            from src.dialogue_system.policy_learning.dqn import DQN3 as DQN
+
         self.dqn = DQN(input_size=input_size, hidden_size=hidden_size,output_size=output_size, parameter=parameter)
 
     def next(self, state, turn):

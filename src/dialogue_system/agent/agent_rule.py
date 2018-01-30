@@ -13,6 +13,9 @@ from src.dialogue_system import dialogue_configuration
 
 
 class AgentRule(Agent):
+    """
+    Rule-based agent.
+    """
     def __init__(self,action_set, slot_set, disease_symptom, parameter):
         super(AgentRule,self).__init__(action_set=action_set,slot_set=slot_set,disease_symptom=disease_symptom,parameter=parameter)
 
@@ -44,8 +47,8 @@ class AgentRule(Agent):
     def _get_candidate_disease_symptoms(self, state):
         """
         Comparing state["current_slots"] with disease_symptom to identify which disease the user may have.
-        :param state: Dialogue state defined in state_tracker.
-        :return: Candidate symptoms list.
+        :param state: a dict, the current dialogue state gotten from dialogue state tracker..
+        :return: a list of candidate symptoms.
         """
         inform_slots = state["current_slots"]["inform_slots"]
         inform_slots.update(state["current_slots"]["explicit_inform_slots"])

@@ -31,8 +31,9 @@ class SlotDumper(object):
     """
     处理disease_symptom文件，将里面的每一个symptom作为一个slot处理，进行持久化。
     """
-    def __init__(self, slots_file):
+    def __init__(self, slots_file, hand_crafted_symptom=True):
         self.file_name = slots_file
+        self.hand_crafted_symptom = hand_crafted_symptom
 
     def dump(self, slot_dump_file_name, disease_dump_file_name):
         self._load_slot()
@@ -50,15 +51,27 @@ class SlotDumper(object):
         self.slot_set = set()
         self.disease_symptom = {}
         data_file = open(file=self.file_name, mode="r",encoding="utf-8")
-        index = 0
-        for line in data_file:
-            line = json.loads(line)
-            self.disease_symptom[line["name"]] = {}
-            self.disease_symptom[line["name"]]["index"] = index
-            self.disease_symptom[line["name"]]["symptom"] = list(line["symptom"].keys())
-            for key in line["symptom"].keys():
-                self.slot_set.add(key)
-            index += 1
+        if self.hand_crafted_symptom == True:
+            index = 0
+            for line in data_file:
+                line = json.loads(line)
+                self.disease_symptom[line["name"]] = {}
+                self.disease_symptom[line["name"]]["index"] = index
+                self.disease_symptom[line["name"]]["symptom"] = list(line["symptom"].keys())
+                for key in line["symptom"].keys():
+                    self.slot_set.add(key)
+                index += 1
+        else:
+            index = 0
+            for line in data_file:
+                line = json.loads(line)
+                self.disease_symptom[line["name"]] = {}
+                self.disease_symptom[line["name"]]["index"] = index
+                self.disease_symptom[line["name"]]["symptom"] = line["symptom"]
+                for symptom in line["symptom"]:
+                    self.slot_set.add(symptom)
+                index += 1
+
         data_file.close()
 
 
@@ -101,11 +114,11 @@ if __name__ == "__main__":
     # action_dumper.dump(dump_file_name=action_dump_file)
 
     # Slots.
-    # slots_file = "./../../../resources/top_disease_symptom_aligned.json"
-    # slots_dump_file = "./../data/slot_set.p"
-    # disease_dump_file = "./../data/disease_symptom.p"
-    # slots_dumper = SlotDumper(slots_file=slots_file)
-    # slots_dumper.dump(slot_dump_file_name=slots_dump_file,disease_dump_file_name=disease_dump_file)
+    slots_file = "./../../../resources/top_disease_symptom_aligned.json"
+    slots_dump_file = "./../data/slot_set.p"
+    disease_dump_file = "./../data/disease_symptom.p"
+    slots_dumper = SlotDumper(slots_file=slots_file)
+    slots_dumper.dump(slot_dump_file_name=slots_dump_file,disease_dump_file_name=disease_dump_file)
 
     # Goal
     goal_file = "./../../../resources/goal_slot_value_0.2.json"
