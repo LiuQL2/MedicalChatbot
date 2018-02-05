@@ -41,7 +41,7 @@ class DialogueManager(object):
         """
         # Agent takes action.
         state = self.state_tracker.get_state()
-        agent_action, action_index = self.state_tracker.agent.next(state=state,turn=self.state_tracker.turn)
+        agent_action, action_index = self.state_tracker.agent.next(state=state,turn=self.state_tracker.turn,train_mode=train_mode)
         self.state_tracker.state_updater(agent_action=agent_action)
         # print("turn:%2d, state for agent:\n" % (self.state_tracker.turn -1) , json.dumps(state))
 
@@ -80,13 +80,13 @@ class DialogueManager(object):
 
         return reward
 
-    def initialize(self,train_mode=1):
+    def initialize(self,train_mode=1, epoch_index=None):
         self.trajectory = []
         self.state_tracker.initialize()
         self.episode_over = False
         self.inform_wrong_disease_count = 0
         self.dialogue_status = dialogue_configuration.NOT_COME_YET
-        user_action = self.state_tracker.user.initialize(train_mode = train_mode)
+        user_action = self.state_tracker.user.initialize(train_mode = train_mode, epoch_index=epoch_index)
         self.state_tracker.state_updater(user_action=user_action)
         self.state_tracker.agent.initialize()
         # print("#"*30 + "\n" + "user goal:\n", json.dumps(self.state_tracker.user.goal))

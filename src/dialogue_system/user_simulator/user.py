@@ -55,14 +55,14 @@ from src.dialogue_system import dialogue_configuration
 
 class User(object):
     def __init__(self, goal_set, action_set, parameter):
-        self.goal_set = goal_set
+        self.goal_set, self.disease_sample_count = self.__prepare_goal_set__(goal_set,parameter)
         self.action_set = action_set
         self.max_turn = parameter["max_turn"]
         self.parameter = parameter
         self._init()
 
-    def initialize(self, train_mode=1):
-        self._init(train_mode=train_mode)
+    def initialize(self, train_mode=1, epoch_index=None):
+        self._init(train_mode=train_mode,epoch_index=epoch_index)
 
         # Initialize rest slot for this user.
         # 初始的时候request slot里面必有disease，然后随机选择explicit_inform_slots里面的slot进行用户主诉的构建，若explicit里面没
@@ -72,8 +72,11 @@ class User(object):
         self.state["action"] = "request"
         self.state["request_slots"]["disease"] = dialogue_configuration.VALUE_UNKNOWN
 
-        first_inform_number = random.randint(1,len(goal["explicit_inform_slots"].keys()))
-        inform_slots = random.sample(list(goal["explicit_inform_slots"].keys()),k=first_inform_number)
+        if len(goal["explicit_inform_slots"].keys()) > 0:
+            first_inform_number = random.randint(1,len(goal["explicit_inform_slots"].keys()))
+            inform_slots = random.sample(list(goal["explicit_inform_slots"].keys()),k=first_inform_number)
+        else:
+            inform_slots = []
 
         for slot in goal["explicit_inform_slots"].keys():
             # self.state["explicit_inform_slots"][slot] = goal["explicit_inform_slots"][slot]
@@ -97,7 +100,7 @@ class User(object):
         user_action = self._assemble_user_action()
         return user_action
 
-    def _init(self,train_mode=1):
+    def _init(self,train_mode=1,epoch_index=None):
         """
         used for initializing an instance or an episode.
         :return: Nothing
@@ -116,6 +119,8 @@ class User(object):
             self.goal = random.choice(self.goal_set["train"])
         else:
             self.goal = random.choice(self.goal_set["test"])
+            # assert (epoch_index != None), "epoch index is None when evaluating."
+            # self.goal = self.goal_set["test"][epoch_index]
         self.episode_over = False
         self.dialogue_status = dialogue_configuration.NOT_COME_YET
         self.constraint_check = dialogue_configuration.CONSTRAINT_CHECK_FAILURE
@@ -311,9 +316,18 @@ class User(object):
             if "disease" in self.state["rest_slots"]: self.state["rest_slots"].pop("disease")
         # The agent informed wrong disease and the dialogue will go on if not reach the max_turn.
         elif "disease" in agent_action["inform_slots"].keys() and agent_action["inform_slots"]["disease"] != self.goal["disease_tag"]:
-            self.state["action"] = "deny"
-            self.state["inform_slots"]["disease"] = agent_action["inform_slots"]["disease"]
-            self.dialogue_status = dialogue_configuration.INFORM_WRONG_DISEASE
+            # The user denys the informed disease, and the dialogue will going on.
+            # self.state["action"] = "deny"
+            # self.state["inform_slots"]["disease"] = agent_action["inform_slots"]["disease"]
+            # self.dialogue_status = dialogue_configuration.INFORM_WRONG_DISEASE
+
+            # The informed disease is wrong, and the dialogue is failed.
+            self.state["action"] = dialogue_configuration.CLOSE_DIALOGUE
+            self.dialogue_status = dialogue_configuration.DIALOGUE_FAILED
+            self.episode_over = True
+            self.state["inform_slots"].clear()
+            self.state["explicit_inform_slots"].clear()
+            self.state["implicit_inform_slots"].clear()
 
         # No disease is informed in the agent action.
         else: # Task is not completed.
@@ -427,3 +441,22 @@ class User(object):
 
     def get_goal(self):
         return self.goal
+
+    def __prepare_goal_set__(self, goal_set, parameter):
+        explicit_number = parameter.get('explicit_number')
+        implicit_number = parameter.get('implicit_number')
+        temp_goal_set = {}
+        disease_sample_count = {}
+        for key in goal_set.keys():
+            temp_goal_set[key] = []
+            for goal in goal_set[key]:
+                append_or_not = False
+                if len(goal["goal"]["explicit_inform_slots"].keys()) >= explicit_number and \
+                        len(goal["goal"]["implicit_inform_slots"].keys()) >= implicit_number:
+                    append_or_not = True
+
+                if append_or_not:
+                    temp_goal_set[key].append(goal)
+                    disease_sample_count.setdefault(goal["disease_tag"],0)
+                    disease_sample_count[goal["disease_tag"]] += 1
+        return temp_goal_set, disease_sample_count

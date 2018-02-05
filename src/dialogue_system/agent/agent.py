@@ -53,12 +53,13 @@ class Agent(object):
             "speaker":"agent"
         }
 
-    def next(self, state, turn):
+    def next(self, state, turn, train_mode=1):
         """
         Taking action based on different methods, e.g., DQN-based AgentDQN, rule-based AgentRule.
         Detail codes will be implemented in different sub-class of this class.
         :param state: a vector, the representation of current dialogue state.
         :param turn: int, the time step of current dialogue session.
+        :param train_mode: int, 1:for training, 0:for evaluation
         :return: a tuple consists of the selected agent action and action index.
         """
         return self.agent_action
@@ -158,10 +159,14 @@ class Agent(object):
         for slot in current_slots.keys():
             if current_slots[slot] == True:
                 current_slots_rep[self.slot_set[slot]] = 1.0
-            elif current_slots[slot] == dialogue_configuration.I_DO_NOT_KNOW:
+            elif current_slots[slot] == False:
                 current_slots_rep[self.slot_set[slot]] = -1.0
+            elif current_slots[slot] == dialogue_configuration.I_DO_NOT_KNOW:
+                current_slots_rep[self.slot_set[slot]] = 2.0
             elif current_slots[slot] == dialogue_configuration.I_DENY:
-                current_slots_rep[self.slot_set[slot]] = 2
+                current_slots_rep[self.slot_set[slot]] = -2.0
+            elif current_slots[slot] == dialogue_configuration.I_DO_NOT_CARE:
+                current_slots_rep[self.slot_set[slot]] = 3.0
 
         # wrong diseases rep.
         wrong_diseases = state["current_slots"]["wrong_diseases"]
@@ -184,7 +189,16 @@ class Agent(object):
         if "disease" in user_inform_slots: user_inform_slots.pop("disease")
         user_inform_slots_rep = np.zeros(len(self.slot_set.keys()))
         for slot in user_inform_slots.keys():
-            user_inform_slots_rep[self.slot_set[slot]] = 1.0
+            if user_inform_slots[slot] == True:
+                user_inform_slots_rep[self.slot_set[slot]] = 1.0
+            elif user_inform_slots[slot] == False:
+                user_inform_slots_rep[self.slot_set[slot]] = -1.0
+            elif user_inform_slots[slot] == dialogue_configuration.I_DO_NOT_KNOW:
+                user_inform_slots_rep[self.slot_set[slot]] = 2.0
+            elif user_inform_slots[slot] == dialogue_configuration.I_DENY:
+                user_inform_slots_rep[self.slot_set[slot]] = -2.0
+            elif user_inform_slots[slot] == dialogue_configuration.I_DO_NOT_CARE:
+                user_inform_slots_rep[self.slot_set[slot]] = 3.0
 
         # User last request slot rep.
         user_request_slots = copy.deepcopy(state["user_action"]["request_slots"])
@@ -220,7 +234,6 @@ class Agent(object):
             pass
 
         state_rep = np.hstack((current_slots_rep, wrong_diseases_rep, user_action_rep, user_inform_slots_rep, user_request_slots_rep, agent_action_rep, agent_inform_slots_rep, agent_request_slots_rep, turn_rep))
-        # state_rep = np.hstack((current_slots_rep, user_action_rep, user_inform_slots_rep, user_request_slots_rep, agent_action_rep, agent_inform_slots_rep, agent_request_slots_rep, turn_rep))
         return state_rep
 
     def _build_action_space(self):

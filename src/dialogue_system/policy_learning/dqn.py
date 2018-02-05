@@ -23,8 +23,9 @@ class DQN0(object):
         self.checkpoint_path = parameter.get("checkpoint_path")
         self.log_dir = parameter.get("log_dir")
         self.parameter = parameter
-
-        with tf.device("/device:GPU:0"):
+        self.learning_rate = parameter.get("dqn_learning_rate")
+        device = parameter.get("device_for_tf")
+        with tf.device(device):
             self.graph = tf.Graph()
             with self.graph.as_default():
                 self.input = tf.placeholder(dtype=tf.float64, shape=(None, self.input_size), name="input")
@@ -52,7 +53,7 @@ class DQN0(object):
 
                 # Optimization.
                 self.loss = tf.reduce_mean(tf.reduce_sum(tf.square(self.target_value - self.current_output),axis=1),name="loss")
-                self.optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.001).minimize(loss=self.loss)
+                self.optimizer = tf.train.GradientDescentOptimizer(learning_rate=self.learning_rate).minimize(loss=self.loss)
                 self.initializer = tf.global_variables_initializer()
                 self.model_saver = tf.train.Saver()
             self.graph.finalize()
@@ -114,13 +115,17 @@ class DQN0(object):
         self.session.run(self.update_target_weights)
         self.session.run(self.update_target_bias)
 
-    def save_model(self, model_performance,episodes_index):
+    def save_model(self, model_performance,episodes_index, checkpoint_path = None):
+        if checkpoint_path == None: checkpoint_path = self.checkpoint_path
+        agent_id = self.parameter.get("agent_id")
+        dqn_id = self.parameter.get("dqn_id")
+        disease_number = self.parameter.get("disease_number")
         success_rate = model_performance["success_rate"]
         average_reward = model_performance["average_reward"]
         average_turn = model_performance["average_turn"]
         average_wrong_disease = model_performance["average_wrong_disease"]
-        model_file_name = "model_s" + str(success_rate) + "_r" + str(average_reward) + "_t" + str(average_turn) + "_wd" + str(average_wrong_disease) + "_e" + str(episodes_index) + ".ckpt"
-        self.model_saver.save(sess=self.session,save_path=self.checkpoint_path + model_file_name)
+        model_file_name = "model_d" + str(disease_number) + "_agent" + str(agent_id) + "_dqn" + str(dqn_id) + "_s" + str(success_rate) + "_r" + str(average_reward) + "_t" + str(average_turn) + "_wd" + str(average_wrong_disease) + "_e" + str(episodes_index) + ".ckpt"
+        self.model_saver.save(sess=self.session,save_path=checkpoint_path + model_file_name)
 
     def restore_model(self, saved_model):
         print("loading trained model")
@@ -137,38 +142,15 @@ class DQN1(DQN0):
         self.__build_model()
 
     def __build_model(self):
-        with tf.device("/device:GPU:0"):
+        device = self.parameter.get("device_for_tf")
+        with tf.device(device):
             self.graph = tf.Graph()
-
-            # with self.graph.as_default():
-            #     self.input = tf.placeholder(dtype=tf.float64, shape=(None, self.input_size), name="input")
-            #     self.target_value = tf.placeholder(dtype=tf.float64, shape=(None, None), name="target_value")
-            #     # Target network
-            #     with tf.variable_scope(name_or_scope="target_network"):
-            #         self.target_weights = tf.get_variable(name="weights", shape=(self.input_size, output_size),dtype=tf.float64)
-            #         self.target_bias = tf.get_variable(name="bias", shape=(self.output_size), dtype=tf.float64)
-            #         self.target_output = tf.nn.relu(tf.add(tf.matmul(self.input, self.target_weights), self.target_bias), name="target_output")
-            #
-            #         tf.summary.scalar("target_weight", self.target_weights)
-            #         tf.summary.scalar("target_bias", self.target_bias)
-            #     # Current network.
-            #     with tf.variable_scope(name_or_scope="current_network"):
-            #         self.current_weights = tf.get_variable(name="weights", shape=(self.input_size, output_size),dtype=tf.float64)
-            #         self.current_bias = tf.get_variable(name="bias", shape=(self.output_size), dtype=tf.float64)
-            #         self.current_output = tf.nn.relu(tf.add(tf.matmul(self.input, self.current_weights), self.current_bias), name="current_output")
-            #
-            #         tf.summary.scalar("current_weight", self.current_weights)
-            #         tf.summary.scalar("current_bias", self.current_bias)
-            #     # Updating target network.
-            #
-            #     self.update_target_weights = tf.assign(self.target_weights, self.current_weights.value())
-            #     self.update_target_bias = tf.assign(self.target_bias, self.current_bias.value())
 
             with self.graph.as_default():
                 self.input = tf.placeholder(dtype=tf.float64, shape=(None, self.input_size), name="input")
                 self.target_value = tf.placeholder(dtype=tf.float64, shape=(None, self.output_size), name="target_value")
                 # Target network
-                regularizer = tf.contrib.layers.l2_regularizer(scale=0.01)
+                self.regularizer = tf.contrib.layers.l2_regularizer(scale=0.1)
 
                 with tf.variable_scope(name_or_scope="target_network"):
                     self.target_network_variables = {}
@@ -193,17 +175,17 @@ class DQN1(DQN0):
                     for key, value in self.current_network_variables.items():
                         if "w" in key: tf.add_to_collection(tf.GraphKeys.REGULARIZATION_LOSSES, value)
                 # Updating target network.
-                with tf.name_scope(name="update_target_network"):
+                with tf.name_scope(name="ops_of_updating_target_network"):
                     self.update_target_network_operations = self._update_target_network_operations()
 
                 # Optimization.
                 reg_variables = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
-                reg_loss = tf.contrib.layers.apply_regularization(regularizer, reg_variables)
+                self.reg_loss = tf.contrib.layers.apply_regularization(self.regularizer, reg_variables)
                 self.loss = tf.reduce_mean(tf.reduce_sum(tf.square(self.target_value - self.current_output),axis=1),name="loss") \
-                            + reg_loss
+                            + self.reg_loss
 
                 tf.summary.scalar("loss", self.loss)
-                self.optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.001).minimize(loss=self.loss)
+                self.optimizer = tf.train.GradientDescentOptimizer(learning_rate=self.learning_rate).minimize(loss= self.loss)
                 self.initializer = tf.global_variables_initializer()
                 self.model_saver = tf.train.Saver()
                 # self.merged_summary = tf.summary.merge_all()
@@ -251,7 +233,8 @@ class DQN2(DQN1):
         self.__build_model()
 
     def __build_model(self):
-        with tf.device("/device:GPU:0"):
+        device = self.parameter.get("device_for_tf")
+        with tf.device(device):
             self.graph = tf.Graph()
 
             with self.graph.as_default():
@@ -259,7 +242,8 @@ class DQN2(DQN1):
                 self.target_value = tf.placeholder(dtype=tf.float64, shape=(None, self.output_size),
                                                    name="target_value")
                 # Target network
-                regularizer = tf.contrib.layers.l2_regularizer(scale=0.01)
+                # from tensorflow.contrib.layers.python.layers.regularizers import l2_regularizer
+                self.regularizer = tf.contrib.layers.l2_regularizer(scale=0.1)
 
                 with tf.variable_scope(name_or_scope="target_network"):
                     self.target_network_variables = {}
@@ -298,17 +282,17 @@ class DQN2(DQN1):
                     for key, value in self.current_network_variables.items():
                         if "w" in key: tf.add_to_collection(tf.GraphKeys.REGULARIZATION_LOSSES, value)
                 # Updating target network.
-                with tf.name_scope(name="update_target_network"):
+                with tf.name_scope(name="ops_of_updating_target_network"):
                     self.update_target_network_operations = self._update_target_network_operations()
 
                 # Optimization.
                 reg_variables = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
-                reg_loss = tf.contrib.layers.apply_regularization(regularizer, reg_variables)
+                self.reg_loss = tf.contrib.layers.apply_regularization(self.regularizer, reg_variables)
                 self.loss = tf.reduce_mean(tf.reduce_sum(tf.square(self.target_value - self.current_output), axis=1),
-                                           name="loss") + reg_loss
+                                           name="loss") + self.reg_loss
 
                 tf.summary.scalar("loss", self.loss)
-                self.optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.001).minimize(loss=self.loss)
+                self.optimizer = tf.train.GradientDescentOptimizer(learning_rate=self.learning_rate).minimize(loss=self.loss)
                 self.initializer = tf.global_variables_initializer()
                 self.model_saver = tf.train.Saver()
                 # self.merged_summary = tf.summary.merge_all()
@@ -354,6 +338,13 @@ class DQN3(object):
     """Activation Function: Sigmoid, or tanh, or ReLu"""
 
     def fwdPass(self, Xs, params, **kwargs):
+        """
+
+        :param Xs: one sample with the shape of (1, input_size)
+        :param params:
+        :param kwargs:
+        :return:
+        """
         predict_mode = kwargs.get('predict_mode', False)
         active_func = params.get('activation_func', 'relu')
 
@@ -365,11 +356,11 @@ class DQN3(object):
         hidden_size = self.model['Wd'].shape[0]  # size of hidden layer
         H = np.zeros((1, hidden_size))  # hidden layer representation
 
-        if active_func == 'sigmoid':
+        if active_func.lower() == 'sigmoid':
             H = 1 / (1 + np.exp(-Xsh))
-        elif active_func == 'tanh':
+        elif active_func.lower() == 'tanh':
             H = np.tanh(Xsh)
-        elif active_func == 'relu':  # ReLU
+        elif active_func.lower() == 'relu':  # ReLU
             H = np.maximum(Xsh, 0)
         else:  # no activation function
             H = Xsh
@@ -624,14 +615,18 @@ class DQN3(object):
     def update_target_network(self):
         self.clone_dqn = copy.deepcopy(self)
 
-    def save_model(self, model_performance,episodes_index):
+    def save_model(self, model_performance,episodes_index, checkpoint_path = None):
+        if checkpoint_path == None: checkpoint_path = self.checkpoint_path
+        agent_id = self.parameter.get("agent_id")
+        dqn_id = self.parameter.get("dqn_id")
+        disease_number = self.parameter.get("disease_number")
         success_rate = model_performance["success_rate"]
         average_reward = model_performance["average_reward"]
         average_turn = model_performance["average_turn"]
         average_wrong_disease = model_performance["average_wrong_disease"]
-        model_file_name = "model_s" + str(success_rate) + "_r" + str(average_reward) + "_t" + \
+        model_file_name = "model_d" + str(disease_number) + "_agent" + str(agent_id) + "_dqn" + str(dqn_id) + "_s" + str(success_rate) + "_r" + str(average_reward) + "_t" + \
                           str(average_turn) + "_wd" + str(average_wrong_disease) + "_e" + str(episodes_index) + ".p"
-        pickle.dump(file=open(self.checkpoint_path + model_file_name, "wb"), obj=self.model)
+        pickle.dump(file=open(checkpoint_path + model_file_name, "wb"), obj=self.model)
 
     def __initWeight(self,n, d):
         scale_factor = math.sqrt(float(6) / (n + d))

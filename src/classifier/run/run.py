@@ -11,12 +11,30 @@ from src.classifier.self_report_as_feature.report_classifier import ReportClassi
 
 
 parser = argparse.ArgumentParser()
+
+# for 7 diseases
+# parser.add_argument("--slot_set", dest="slot_set", type=str, default='./../../dialogue_system/data/10_diseases/slot_set.p', help='path and filename of the slots set')
+# parser.add_argument("--goal_set", dest="goal_set", type=str, default='./../../dialogue_system/data/10_diseases/goal_set.p', help='path and filename of user goal')
+# parser.add_argument("--disease_symptom", dest="disease_symptom", type=str, default="./../../dialogue_system/data/10_diseases/disease_symptom.p", help="path and filename of the disease_symptom file")
+
+# for 10 diseases
+# parser.add_argument("--slot_set", dest="slot_set", type=str, default='./../../dialogue_system/data/10_diseases01/slot_set.p', help='path and filename of the slots set')
+# parser.add_argument("--goal_set", dest="goal_set", type=str, default='./../../dialogue_system/data/10_diseases01/goal_set.p', help='path and filename of user goal')
+# parser.add_argument("--disease_symptom", dest="disease_symptom", type=str, default="./../../dialogue_system/data/10_diseases01/disease_symptom.p", help="path and filename of the disease_symptom file")
+
 parser.add_argument("--slot_set", dest="slot_set", type=str, default='./../../dialogue_system/data/slot_set.p', help='path and filename of the slots set')
 parser.add_argument("--goal_set", dest="goal_set", type=str, default='./../../dialogue_system/data/goal_set.p', help='path and filename of user goal')
+parser.add_argument("--disease_symptom", dest="disease_symptom", type=str, default="./../../dialogue_system/data/disease_symptom.p", help="path and filename of the disease_symptom file")
+
+
+parser.add_argument("--explicit_number", dest="explicit_number", type=int, default=0, help="the number of explicit symptoms of used sample")
+parser.add_argument("--implicit_number", dest="implicit_number", type=int, default=1, help="the number of implicit symptoms of used sample")
+
+
 parser.add_argument("--batch_size", dest="batch_size",type=int, default=32, help="the batch size for training.")
 parser.add_argument("--hidden_size", dest="hidden_size",type=int, default=40, help="the hidden size of classifier.")
-parser.add_argument("--disease_symptom", dest="disease_symptom", type=str, default="./../../dialogue_system/data/disease_symptom.p", help="path and filename of the disease_symptom file")
-parser.add_argument("--explicit_only", dest="explicit_only", type=int, default=0, help="only use explicit symptom for classification? 1:yes, 0:no")
+parser.add_argument("--train_feature", dest="train_feature", type=str, default="ex", help="only use explicit symptom for classification? ex:yes, ex&im:no")
+parser.add_argument("--test_feature", dest="test_feature", type=str, default="ex", help="only use explicit symptom for testing? ex:yes, ex&im:no")
 parser.add_argument("--checkpoint_path",dest="checkpoint_path", type=str, default="./../model/checkpoint/", help="the folder where models save to, ending with /.")
 parser.add_argument("--saved_model", dest="saved_model", type=str, default="./../model/checkpoint/model_s0.89_r735.0_t7.08_wd1.55_e20.ckpt")
 parser.add_argument("--learning_rate", dest="learning_rate", type=float, default=0.2,help="the learning rate when training the model.")
@@ -31,11 +49,10 @@ def run():
     hidden_size = parameter.get("hidden_size")
 
     print("##"*30+"\nSymptom as features\n"+"##"*30)
-    classifier = SymptomClassifier(goal_set=goal_set,symptom_set=slot_set,disease_symptom=disease_symptom,hidden_size=hidden_size,parameter=parameter)
-    classifier.train_tf()
-    classifier.evaluate_tf()
+    classifier = SymptomClassifier(goal_set=goal_set,symptom_set=slot_set,disease_symptom=disease_symptom,hidden_size=hidden_size,parameter=parameter,k_fold=5)
     classifier.train_sklearn_svm()
-    classifier.evaluate_sklearn_svm()
+    print(classifier.disease_sample_count)
+
 
     # print("##"*30+"\nSelf-report as features\n"+"##"*30)
     # data_file = "./../../../resources/top_self_report_extracted_symptom.csv"

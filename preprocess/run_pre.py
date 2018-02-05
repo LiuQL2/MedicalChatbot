@@ -4,8 +4,20 @@ from top_disease import TopDiseaseReporter
 from match_disease import DiseaseMatch
 from aligned_symptoms_extracting import DataLoader
 
-top_disease_list = ["上呼吸道感染", "小儿消化不良", "小儿支气管炎","小儿腹泻","小儿感冒",
-                    "小儿咳嗽","新生儿黄疸","小儿便秘","急性支气管炎","小儿支气管肺炎"]
+# 10 diseases
+# top_disease_list = ["上呼吸道感染", "小儿消化不良", "小儿支气管炎","小儿腹泻","小儿感冒",
+#                     "小儿咳嗽","新生儿黄疸","小儿便秘","急性支气管炎","小儿支气管肺炎"]
+
+# 8 diseases
+# top_disease_list = ["上呼吸道感染", "小儿支气管炎","小儿腹泻","小儿感冒"
+#                     ,"新生儿黄疸","小儿便秘","急性支气管炎","小儿支气管肺炎"]
+
+# 7 diseases.
+# top_disease_list = ["上呼吸道感染", "小儿支气管炎", "小儿腹泻", "小儿感冒",
+#                 "小儿咳嗽", "急性支气管炎", "小儿支气管肺炎"]
+
+# 4 diseases.
+top_disease_list = ["上呼吸道感染", "小儿支气管炎", "小儿腹泻", "小儿消化不良",]
 
 # TODO: fist step
 # 从原始文件中把需要分析的疾病抽取出来，也就是最后保存的结果是（日期	1级科室	2级科室	咨询ID	qid	提问内容	疾病标准名称）。
@@ -43,18 +55,20 @@ def symptom_normalization():
     goal_slot_value_save = "./../resources/goal_slot_value_" + str(threshold) + ".json"
     hand_crafted_symptom = True # 是否是人工匹配的症状归一，如果是的，对应的文件为top_disease_symptom_aligned.json，不是需要使用原始的文件。
 
-    report_loader = DataLoader(threshold=threshold, disease_symptom_aligned_file=disease_symptom_aligned_file,hand_crafted_symptom=hand_crafted_symptom)
+    report_loader = DataLoader(threshold=threshold, disease_symptom_aligned_file=disease_symptom_aligned_file,
+                               hand_crafted_symptom=hand_crafted_symptom,
+                               top_disease_list=top_disease_list)
     report_loader.load_self_report(self_report_file=top_self_report_extracted_symptom_file)
     print("Conversation:")
     report_loader.load_conversation(conversation_file=conversation_symptom_file)
 
     slot_file = "./../resources/slot_set.txt"
-    # report_loader.write(file_name=goal_spoken_writing_save)
-    # report_loader.write_slot_value(file_name=goal_slot_value_save)
+    report_loader.write(file_name=goal_spoken_writing_save)
+    report_loader.write_slot_value(file_name=goal_slot_value_save)
     report_loader.write_slots(file_name=slot_file)
 
 
 if __name__ == "__main__":
-    # top_disease()
-    # match_top_self_report()
+    top_disease()
+    match_top_self_report()
     symptom_normalization()

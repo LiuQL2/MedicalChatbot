@@ -21,9 +21,10 @@ class RunningSteward(object):
     """
     The steward of running the dialogue system.
     """
-    def __init__(self, parameter):
+    def __init__(self, parameter, checkpoint_path):
         self.epoch_size = parameter.get("epoch_size",100)
         self.parameter = parameter
+        self.checkpoint_path = checkpoint_path
         self.slot_set = pickle.load(file=open(parameter["slot_set"], "rb"))
         self.action_set = pickle.load(file=open(parameter["action_set"], "rb"))
         self.goal_set = pickle.load(file=open(parameter["goal_set"], "rb"))
@@ -68,7 +69,7 @@ class RunningSteward(object):
                 self.dialogue_manager.experience_replay_pool = deque(maxlen=self.parameter.get("experience_replay_pool_size"))
                 self.simulation_epoch(epoch_size=self.epoch_size)
                 if save_model == 1:
-                    self.dialogue_manager.state_tracker.agent.dqn.save_model(model_performance=result, episodes_index = index)
+                    self.dialogue_manager.state_tracker.agent.dqn.save_model(model_performance=result, episodes_index = index, checkpoint_path=self.checkpoint_path)
                     print("The model was saved.")
                 else:
                     pass
@@ -110,14 +111,16 @@ class RunningSteward(object):
         save_performance = self.parameter.get("save_performance")
         agent_id = self.parameter.get("agent_id")
         dqn_id = self.parameter.get("dqn_id")
+        disease_number = self.parameter.get("disease_number")
         train_mode = 0
         success_count = 0
         total_reward = 0
         total_truns = 0
         evaluate_epoch_size = self.parameter.get("evaluate_epoch_size")
+        # evaluate_epoch_size = len(self.dialogue_manager.state_tracker.user.goal_set["test"])
         inform_wrong_disease_count = 0
         for epoch_index in range(0,evaluate_epoch_size, 1):
-            self.dialogue_manager.initialize(train_mode=train_mode)
+            self.dialogue_manager.initialize(train_mode=train_mode, epoch_index=epoch_index)
             while self.dialogue_manager.episode_over == False:
                 reward = self.dialogue_manager.next(train_mode=train_mode)
                 total_reward += reward
@@ -125,10 +128,11 @@ class RunningSteward(object):
             inform_wrong_disease_count += self.dialogue_manager.inform_wrong_disease_count
             if self.dialogue_manager.dialogue_status == dialogue_configuration.DIALOGUE_SUCCESS:
                 success_count += 1
-        success_rate = float(success_count) / evaluate_epoch_size
-        average_reward = float(total_reward) / evaluate_epoch_size
-        average_turn = float(total_truns) / evaluate_epoch_size
-        average_wrong_disease = float(inform_wrong_disease_count) / evaluate_epoch_size
+        success_rate = float("%.3f" % (float(success_count) / evaluate_epoch_size))
+        average_reward = float("%.3f" % (float(total_reward) / evaluate_epoch_size))
+        average_turn = float("%.3f" % (float(total_truns) / evaluate_epoch_size))
+        average_wrong_disease = float("%.3f" % (float(inform_wrong_disease_count) / evaluate_epoch_size))
+        float()
         res = {"success_rate":success_rate, "average_reward": average_reward, "average_turn": average_turn, "average_wrong_disease":average_wrong_disease}
         self.learning_curve.setdefault(index, dict())
         self.learning_curve[index]["success_rate"]=success_rate
@@ -136,9 +140,9 @@ class RunningSteward(object):
         self.learning_curve[index]["average_wrong_disease"]=average_wrong_disease
         if index % 100 == 99 and save_performance == 1:
             if agent_id == 1:
-                file_name = "learning_rate_e" + str(index) + "_agent" + str(agent_id) + "_dqn" + str(dqn_id) + ".p"
+                file_name = "learning_rate_d" + str(disease_number) + "_e" + str(index) + "_agent" + str(agent_id) + "_dqn" + str(dqn_id) + ".p"
             else:
-                file_name = "learning_rate_e" + str(index) + "_agent" + str(agent_id) + ".p"
+                file_name = "learning_rate_d" + str(disease_number) + "_e" + str(index) + "_agent" + str(agent_id) + ".p"
             pickle.dump(file=open(self.parameter.get("performance_save_path") + file_name, "wb"), obj=self.learning_curve)
         print("%3d simulation success rate %s, ave reward %s, ave turns %s, ave wrong disease %s" % (index,res['success_rate'], res['average_reward'], res['average_turn'], res["average_wrong_disease"]))
         return res

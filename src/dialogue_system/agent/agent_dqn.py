@@ -31,12 +31,12 @@ class AgentDQN(Agent):
 
         self.dqn = DQN(input_size=input_size, hidden_size=hidden_size,output_size=output_size, parameter=parameter)
 
-    def next(self, state, turn):
+    def next(self, state, turn,train_mode=1):
         # TODO (Qianlong): take action condition on current state.
         self.agent_action["turn"] = turn
         state_rep = self.state_to_representation_last(state=state) # sequence representation.
         greedy = random.random()
-        if greedy < self.parameter.get("epsilon"):
+        if greedy < self.parameter.get("epsilon") and train_mode == 1:
             action_index = random.randint(0, len(self.action_sapce)-1)
         else:
             action_index = self.dqn.predict(Xs=[state_rep])[1]

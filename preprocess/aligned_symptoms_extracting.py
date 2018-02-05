@@ -53,17 +53,19 @@ class SymptomAligner(object):
         writing_symptom = sorted(similarity_score, key=lambda x:similarity_score[x])[-1]
         score = similarity_score[writing_symptom]
         if score >= self.threshold:
-            print("writing_symptom:", writing_symptom, "score:", score,"spoken_symptom:", spoken_symptom)
+            # print("writing_symptom:", writing_symptom, "score:", score,"spoken_symptom:", spoken_symptom)
             return writing_symptom
         else:
             return None
 
 
 class DataLoader(object):
-    def __init__(self,threshold, disease_symptom_aligned_file, hand_crafted_symptom):
+    def __init__(self,threshold, disease_symptom_aligned_file, hand_crafted_symptom, top_disease_list):
+        self.top_disease_list = top_disease_list
         self.symptom_aligner = SymptomAligner(disease_symptom_aligned_file, threshold=threshold,hand_crafted_symptom=hand_crafted_symptom)
         self.sample = {}
         self.symptom_slots = set()
+        self.deny_list = ["不","否","没有","没"]
 
     def load_self_report(self, self_report_file):
         """
@@ -73,8 +75,8 @@ class DataLoader(object):
         """
         data_reader = csv.reader(open(self_report_file, "r",encoding="utf-8"))
         for line in data_reader:
-            print(line)
-            if line[5] == "小儿发热": continue
+            # print(line)
+            if line[5] not in self.top_disease_list: continue
             self.sample.setdefault(line[4], dict())
             self.sample[line[4]]["request_slots"] = {"disease":line[5]}
             self.sample[line[4]].setdefault("explicit_inform_slots", dict())
@@ -83,7 +85,7 @@ class DataLoader(object):
                 index = line.index("")
             except:
                 index = len(line)
-            symptom_list = line[7:index]
+            symptom_list = line[8:index]
             for symptom in symptom_list:
                 spoken_symptom = symptom.replace("\n","")
                 writing_symptom = self.symptom_aligner.align(spoken_symptom)
@@ -105,7 +107,8 @@ class DataLoader(object):
             line = temp_line
 
             # 判断是否是四种疾病下的conversation，然后进行症状归一化。
-            if line[0] in self.sample.keys():
+            # if line[0] in self.sample.keys() and str(line[1]) == str(3):#只抽取患者说的症状。2：患者说的话，3：医生说的话
+            if line[0] in self.sample.keys():#抽取患者和医生说的症状。
                 for index in range(3, len(line)):
                     spoken_symptom = line[index].replace("\n","")
                     writing_symptom = self.symptom_aligner.align(spoken_symptom)
@@ -126,12 +129,15 @@ class DataLoader(object):
             line["goal"]["request_slots"]["disease"] = "UNK"
 
             for spoken_symptom, writing_symptom in value["explicit_inform_slots"].items():
-                line["goal"]["explicit_inform_slots"][writing_symptom] = True
+                print("spoken:",spoken_symptom, writing_symptom)
+                line["goal"]["explicit_inform_slots"][writing_symptom] = self._true_or_false(spoken_symptom, writing_symptom)
                 self.symptom_slots.add(writing_symptom)
             for spoken_symptom, writing_symptom in value["implicit_inform_slots"].items():
+                print("spoken:",spoken_symptom, writing_symptom)
                 if writing_symptom in line["goal"]["explicit_inform_slots"].keys(): continue
-                line["goal"]["implicit_inform_slots"][writing_symptom] = True
+                line["goal"]["implicit_inform_slots"][writing_symptom] = self._true_or_false(spoken_symptom,writing_symptom)
                 self.symptom_slots.add(writing_symptom)
+
             data_file.write(json.dumps(line) + "\n")
         data_file.close()
 
@@ -145,6 +151,19 @@ class DataLoader(object):
         for symptom in self.symptom_slots:
             data_file.write(symptom + "\n")
         data_file.close()
+
+    def _true_or_false(self, spoken_symptom, writing_symptom):
+        exception_symptom_list = ["烦躁不安","呼吸不畅"]
+        exception_list = ["不舒服"]
+        return_value = True
+        for s_ in self.deny_list:
+            if s_ in spoken_symptom and writing_symptom not in exception_symptom_list:
+                return_value = False
+
+        for e in exception_list:
+            if e in spoken_symptom:
+                return_value = True
+        return return_value
 
 
 

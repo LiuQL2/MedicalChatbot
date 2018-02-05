@@ -78,6 +78,7 @@ class SlotDumper(object):
 class GoalDumper(object):
     def __init__(self, goal_file):
         self.file_name = goal_file
+        self.slot_set = set()
 
     def dump(self, dump_file_name, train=0.8, test=0.2, validate=0.0):
         assert (train*100+test*100+validate*100==100), "train + test + validate not equals to 1.0."
@@ -102,7 +103,30 @@ class GoalDumper(object):
                 data_set["test"].append(goal)
             else:
                 data_set["validate"].append(goal)
+
+            for slot, value in goal["goal"]["explicit_inform_slots"].items():
+                if value == False: print(goal)
+                break
+            for slot, value in goal["goal"]["implicit_inform_slots"].items():
+                if value == False: print(goal)
+                break
+
+            # for slot.
+            for symptom in goal["goal"]["explicit_inform_slots"].keys(): self.slot_set.add(symptom)
+            for symptom in goal["goal"]["implicit_inform_slots"].keys(): self.slot_set.add(symptom)
+
         pickle.dump(file=open(dump_file_name,"wb"), obj=data_set)
+
+    def dump_slot(self,slot_file):
+        self.slot_set.add("disease")
+        slot_set_dict = {}
+        slot_set = list(self.slot_set)
+        for index in range(0, len(slot_set), 1):
+            slot_set_dict[slot_set[index]] = index
+        pickle.dump(file=open(slot_file,"wb"),obj=slot_set_dict)
+
+
+
 
 
 if __name__ == "__main__":
@@ -123,5 +147,6 @@ if __name__ == "__main__":
     # Goal
     goal_file = "./../../../resources/goal_slot_value_0.2.json"
     goal_dump_file = "./../data/goal_set.p"
+    slots_dump_file = "./../data/slot_set_2.p"
     goal_dumper = GoalDumper(goal_file=goal_file)
     goal_dumper.dump(dump_file_name=goal_dump_file)
