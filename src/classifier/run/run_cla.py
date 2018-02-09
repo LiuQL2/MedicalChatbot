@@ -22,13 +22,15 @@ parser = argparse.ArgumentParser()
 # parser.add_argument("--goal_set", dest="goal_set", type=str, default='./../../dialogue_system/data/10_diseases01/goal_set.p', help='path and filename of user goal')
 # parser.add_argument("--disease_symptom", dest="disease_symptom", type=str, default="./../../dialogue_system/data/10_diseases01/disease_symptom.p", help="path and filename of the disease_symptom file")
 
+parser.add_argument("--goal_set", dest="goal_set", type=str, default="/Volumes/LIUQL/dataset/goal_set_3.p", help='path and filename of user goal')
+# parser.add_argument("--goal_set", dest="goal_set", type=str, default='/Users/qianlong/Desktop/goal_set.p', help='path and filename of user goal')
+# parser.add_argument("--goal_set", dest="goal_set", type=str, default='./../../dialogue_system/data/4_diseases/both/goal_set.p', help='path and filename of user goal')
 parser.add_argument("--slot_set", dest="slot_set", type=str, default='./../../dialogue_system/data/4_diseases/both/slot_set.p', help='path and filename of the slots set')
-parser.add_argument("--goal_set", dest="goal_set", type=str, default='./../../dialogue_system/data/4_diseases/both/goal_set.p', help='path and filename of user goal')
 parser.add_argument("--disease_symptom", dest="disease_symptom", type=str, default="./../../dialogue_system/data/4_diseases/both/disease_symptom.p", help="path and filename of the disease_symptom file")
 
 
 parser.add_argument("--explicit_number", dest="explicit_number", type=int, default=0, help="the number of explicit symptoms of used sample")
-parser.add_argument("--implicit_number", dest="implicit_number", type=int, default=1, help="the number of implicit symptoms of used sample")
+parser.add_argument("--implicit_number", dest="implicit_number", type=int, default=0, help="the number of implicit symptoms of used sample")
 
 
 parser.add_argument("--batch_size", dest="batch_size",type=int, default=32, help="the batch size for training.")
@@ -53,7 +55,7 @@ def run():
     classifier.train_sklearn_svm()
     print(classifier.disease_sample_count)
     # classifier.sample_to_file("./../data/goal_set.json")
-    classifier.dump_goal_set("/Users/qianlong/Desktop/goal_set.p")
+    # classifier.dump_goal_set("/Volumes/LIUQL/dataset/goal_set_6.p")
 
 
     # print("##"*30+"\nSelf-report as features\n"+"##"*30)

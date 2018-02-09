@@ -70,5 +70,5 @@ def symptom_normalization():
 
 if __name__ == "__main__":
     top_disease()
-    match_top_self_report()
-    symptom_normalization()
+    # match_top_self_report()
+    # symptom_normalization()

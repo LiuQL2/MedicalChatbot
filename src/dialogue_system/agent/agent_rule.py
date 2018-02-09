@@ -19,7 +19,7 @@ class AgentRule(Agent):
     def __init__(self,action_set, slot_set, disease_symptom, parameter):
         super(AgentRule,self).__init__(action_set=action_set,slot_set=slot_set,disease_symptom=disease_symptom,parameter=parameter)
 
-    def next(self, state, turn, train_mode=1):
+    def next(self, state, turn, greedy_strategy):
         candidate_disease_symptoms = self._get_candidate_disease_symptoms(state=state)
         disease = candidate_disease_symptoms["disease"]
         candidate_symptoms = candidate_disease_symptoms["candidate_symptoms"]

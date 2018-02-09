@@ -59,6 +59,7 @@ class User(object):
         self.action_set = action_set
         self.max_turn = parameter["max_turn"]
         self.parameter = parameter
+        self.allow_wrong_disease = parameter.get("allow_wrong_disease")
         self._init()
 
     def initialize(self, train_mode=1, epoch_index=None):
@@ -72,11 +73,15 @@ class User(object):
         self.state["action"] = "request"
         self.state["request_slots"]["disease"] = dialogue_configuration.VALUE_UNKNOWN
 
-        if len(goal["explicit_inform_slots"].keys()) > 0:
-            first_inform_number = random.randint(1,len(goal["explicit_inform_slots"].keys()))
-            inform_slots = random.sample(list(goal["explicit_inform_slots"].keys()),k=first_inform_number)
-        else:
-            inform_slots = []
+        # randomly select several slots from explicit symptoms.
+        # if len(goal["explicit_inform_slots"].keys()) > 0:
+        #     first_inform_number = random.randint(1,len(goal["explicit_inform_slots"].keys()))
+        #     inform_slots = random.sample(list(goal["explicit_inform_slots"].keys()),k=first_inform_number)
+        # else:
+        #     inform_slots = []
+
+        # inform all explicit_symptoms at first.
+        inform_slots = list(goal["explicit_inform_slots"].keys())
 
         for slot in goal["explicit_inform_slots"].keys():
             # self.state["explicit_inform_slots"][slot] = goal["explicit_inform_slots"][slot]
@@ -106,7 +111,7 @@ class User(object):
         :return: Nothing
         """
         self.state = {
-            "turn":1,
+            "turn":0,
             "action":None,
             "history":{}, # For slots that have been informed.
             "request_slots":{}, # For slots that user requested in this turn.
@@ -140,7 +145,7 @@ class User(object):
     def next(self, agent_action, turn):
         agent_act_type = agent_action["action"]
         self.state["turn"] = turn
-        if self.state["turn"] > self.max_turn:
+        if self.state["turn"] == (self.max_turn - 2):
             self.episode_over = True
             self.state["action"] = dialogue_configuration.CLOSE_DIALOGUE
             self.dialogue_status = dialogue_configuration.DIALOGUE_FAILED
@@ -176,9 +181,12 @@ class User(object):
             elif agent_act_type == "request":
                 self._response_request(agent_action=agent_action)
             user_action = self._assemble_user_action()
-            return user_action, self.episode_over, self.dialogue_status
+            reward = self._reward_function()
+            return user_action, reward, self.episode_over, self.dialogue_status
         else:
-            pass
+            user_action = self._assemble_user_action()
+            reward = self._reward_function()
+            return user_action, reward, self.episode_over, self.dialogue_status
 
     def _response_closing(self, agent_action):
         self.state["action"] = dialogue_configuration.THANKS
@@ -317,17 +325,18 @@ class User(object):
         # The agent informed wrong disease and the dialogue will go on if not reach the max_turn.
         elif "disease" in agent_action["inform_slots"].keys() and agent_action["inform_slots"]["disease"] != self.goal["disease_tag"]:
             # The user denys the informed disease, and the dialogue will going on.
-            # self.state["action"] = "deny"
-            # self.state["inform_slots"]["disease"] = agent_action["inform_slots"]["disease"]
-            # self.dialogue_status = dialogue_configuration.INFORM_WRONG_DISEASE
-
+            if self.allow_wrong_disease == 1:
+                self.state["action"] = "deny"
+                self.state["inform_slots"]["disease"] = agent_action["inform_slots"]["disease"]
+                self.dialogue_status = dialogue_configuration.INFORM_WRONG_DISEASE
             # The informed disease is wrong, and the dialogue is failed.
-            self.state["action"] = dialogue_configuration.CLOSE_DIALOGUE
-            self.dialogue_status = dialogue_configuration.DIALOGUE_FAILED
-            self.episode_over = True
-            self.state["inform_slots"].clear()
-            self.state["explicit_inform_slots"].clear()
-            self.state["implicit_inform_slots"].clear()
+            else:
+                self.state["action"] = dialogue_configuration.CLOSE_DIALOGUE
+                self.dialogue_status = dialogue_configuration.DIALOGUE_FAILED
+                self.episode_over = True
+                self.state["inform_slots"].clear()
+                self.state["explicit_inform_slots"].clear()
+                self.state["implicit_inform_slots"].clear()
 
         # No disease is informed in the agent action.
         else: # Task is not completed.
@@ -439,6 +448,33 @@ class User(object):
                 return False
         return True
 
+    def _informed_all_slots_or_not_(self):
+        """
+        If all the inform_slots and request_slots are informed.
+        :return:
+        """
+        if len(self.state["rest_slots"].keys()) > 0:
+            return False
+        else:
+            return False
+
+    def _reward_function(self):
+        if self.dialogue_status == dialogue_configuration.NOT_COME_YET:
+            return self.parameter.get("reward_for_not_come_yet")
+            # return dialogue_configuration.REWARD_FOR_NOT_COME_YET
+        elif self.dialogue_status == dialogue_configuration.DIALOGUE_SUCCESS:
+            success_reward = self.parameter.get("reward_for_success")
+            # success_reward = dialogue_configuration.REWARD_FOR_DIALOGUE_SUCCESS
+            if self.parameter.get("minus_left_slots") == 1:
+                return success_reward - len(self.state["rest_slots"])
+            else:
+                return success_reward
+        elif self.dialogue_status == dialogue_configuration.DIALOGUE_FAILED:
+            return self.parameter.get("reward_for_fail")
+            # return dialogue_configuration.REWARD_FOR_DIALOGUE_FAILED
+        elif self.dialogue_status == dialogue_configuration.INFORM_WRONG_DISEASE:
+            return dialogue_configuration.REWARD_FOR_INFORM_WRONG_DISEASE
+
     def get_goal(self):
         return self.goal
 
@@ -459,4 +495,5 @@ class User(object):
                     temp_goal_set[key].append(goal)
                     disease_sample_count.setdefault(goal["disease_tag"],0)
                     disease_sample_count[goal["disease_tag"]] += 1
+            print(key, len(temp_goal_set[key]))
         return temp_goal_set, disease_sample_count

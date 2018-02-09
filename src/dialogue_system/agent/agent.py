@@ -53,7 +53,7 @@ class Agent(object):
             "speaker":"agent"
         }
 
-    def next(self, state, turn, train_mode=1):
+    def next(self, state, turn, greedy_strategy):
         """
         Taking action based on different methods, e.g., DQN-based AgentDQN, rule-based AgentRule.
         Detail codes will be implemented in different sub-class of this class.
@@ -157,6 +157,9 @@ class Agent(object):
         current_slots.update(state["current_slots"]["proposed_slots"])
         current_slots_rep = np.zeros(len(self.slot_set.keys()))
         for slot in current_slots.keys():
+            # current_slots_rep[self.slot_set[slot]] = 1.0
+
+            # different values for different slot values.
             if current_slots[slot] == True:
                 current_slots_rep[self.slot_set[slot]] = 1.0
             elif current_slots[slot] == False:
@@ -172,11 +175,11 @@ class Agent(object):
         wrong_diseases = state["current_slots"]["wrong_diseases"]
         wrong_diseases_rep = np.zeros(len(self.disease_symptom.keys()))
         for disease in wrong_diseases:
-            wrong_diseases_rep[self.disease_symptom[disease]["index"]] = 1
+            wrong_diseases_rep[self.disease_symptom[disease]["index"]] = 1.0
 
         # Turn rep.
         turn_rep = np.zeros(self.parameter["max_turn"])
-        turn_rep[state["turn"] - 1] = 1.0
+        turn_rep[state["turn"]] = 1.0
 
         # User last action rep.
         user_action_rep = np.zeros(len(self.action_set))
@@ -189,6 +192,9 @@ class Agent(object):
         if "disease" in user_inform_slots: user_inform_slots.pop("disease")
         user_inform_slots_rep = np.zeros(len(self.slot_set.keys()))
         for slot in user_inform_slots.keys():
+            # user_inform_slots_rep[self.slot_set[slot]] = 1.0
+
+            # different values for different slot values.
             if user_inform_slots[slot] == True:
                 user_inform_slots_rep[self.slot_set[slot]] = 1.0
             elif user_inform_slots[slot] == False:
@@ -233,7 +239,8 @@ class Agent(object):
         except:
             pass
 
-        state_rep = np.hstack((current_slots_rep, wrong_diseases_rep, user_action_rep, user_inform_slots_rep, user_request_slots_rep, agent_action_rep, agent_inform_slots_rep, agent_request_slots_rep, turn_rep))
+        # state_rep = np.hstack((current_slots_rep, wrong_diseases_rep, user_action_rep, user_inform_slots_rep, user_request_slots_rep, agent_action_rep, agent_inform_slots_rep, agent_request_slots_rep, turn_rep))
+        state_rep = np.hstack((current_slots_rep, user_action_rep, user_inform_slots_rep, user_request_slots_rep, agent_action_rep, agent_inform_slots_rep, agent_request_slots_rep, turn_rep))
         return state_rep
 
     def _build_action_space(self):

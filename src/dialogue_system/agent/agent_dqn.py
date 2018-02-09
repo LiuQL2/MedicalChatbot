@@ -21,23 +21,28 @@ class AgentDQN(Agent):
         output_size = len(self.action_sapce)
         dqn_id = self.parameter.get("dqn_id")
         if dqn_id == 0:
-            from src.dialogue_system.policy_learning.dqn import DQN0 as DQN
+            from src.dialogue_system.policy_learning import DQN0 as DQN
         elif dqn_id == 1:
-            from src.dialogue_system.policy_learning.dqn import DQN1 as DQN
+            from src.dialogue_system.policy_learning import DQN1 as DQN
         elif dqn_id == 2:
-            from src.dialogue_system.policy_learning.dqn import DQN2 as DQN
+            from src.dialogue_system.policy_learning import DQN2 as DQN
         elif dqn_id == 3:
-            from src.dialogue_system.policy_learning.dqn import DQN3 as DQN
+            from src.dialogue_system.policy_learning import DQN3 as DQN
 
         self.dqn = DQN(input_size=input_size, hidden_size=hidden_size,output_size=output_size, parameter=parameter)
 
-    def next(self, state, turn,train_mode=1):
+    def next(self, state, turn,greedy_strategy):
         # TODO (Qianlong): take action condition on current state.
         self.agent_action["turn"] = turn
         state_rep = self.state_to_representation_last(state=state) # sequence representation.
-        greedy = random.random()
-        if greedy < self.parameter.get("epsilon") and train_mode == 1:
-            action_index = random.randint(0, len(self.action_sapce)-1)
+
+        if greedy_strategy == 1:
+            greedy = random.random()
+            if greedy < self.parameter.get("epsilon"):
+                action_index = random.randint(0, len(self.action_sapce) - 1)
+            else:
+                action_index = self.dqn.predict(Xs=[state_rep])[1]
+        # Evaluating mode.
         else:
             action_index = self.dqn.predict(Xs=[state_rep])[1]
 

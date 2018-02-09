@@ -24,9 +24,9 @@ parser.add_argument("--disease_number", dest="disease_number", type=int,default=
 parser.add_argument("--device_for_tf", dest="device_for_tf", type=str, default="/device:GPU:3", help="the device for tensorflow running on.")
 
 # TODO: simulation configuration
-parser.add_argument("--simulate_epoch_number", dest="simulate_epoch_number", type=int, default=1000, help="the number of simulate epoch.")
+parser.add_argument("--simulate_epoch_number", dest="simulate_epoch_number", type=int, default=1500, help="the number of simulate epoch.")
 parser.add_argument("--epoch_size", dest="epoch_size", type=int, default=100, help="the size of each simulate epoch.")
-parser.add_argument("--evaluate_epoch_size", dest="evaluate_epoch_size", type=int, default=2000, help="the size of each simulate epoch when evaluation.")
+parser.add_argument("--evaluate_epoch_number", dest="evaluate_epoch_number", type=int, default=3000, help="the size of each simulate epoch when evaluation.")
 parser.add_argument("--experience_replay_pool_size", dest="experience_replay_pool_size", type=int, default=10000, help="the size of experience replay.")
 parser.add_argument("--hidden_size_dqn", dest="hidden_size_dqn", type=int, default=300, help="the hidden_size of DQN.")
 parser.add_argument("--warm_start", dest="warm_start",type=int, default=1, help="use rule policy to fill the experience replay buffer at the beginning, 1:True; 0:False")
@@ -39,12 +39,15 @@ parser.add_argument("--train_mode", dest="train_mode", type=int, default=1, help
 
 # TODO: Save model, performance and dialogue content ? And what is the path if yes?
 parser.add_argument("--save_performance",dest="save_performance", type=int, default=1, help="save the performance? 1:Yes, 0:No")
-parser.add_argument("--performance_save_path",dest="performance_save_path", type=str, default="./../model/dqn/learning_rate05/", help="the folder where learning rate save to, ending with /.")
+parser.add_argument("--performance_save_path",dest="performance_save_path", type=str, default="./../model/dqn/learning_rate04/", help="the folder where learning rate save to, ending with /.")
 parser.add_argument("--save_model", dest="save_model", type=int, default=1,help="save model? 1:Yes,0:No")
 parser.add_argument("--checkpoint_path",dest="checkpoint_path", type=str, default="./../model/dqn/checkpoint/", help="the folder where models save to, ending with /.")
-parser.add_argument("--saved_model", dest="saved_model", type=str, default="./../model/dqn/checkpoint/model_s0.79_r-51.95_t7.502_wd1.303_e25.ckpt")
+parser.add_argument("--saved_model", dest="saved_model", type=str, default="./../model/dqn/checkpoint/checkpoint_d4_agt1_dqn1/model_d4_agent1_dqn1_s0.619_r18.221_t4.266_wd0.0_e432.ckpt")
 parser.add_argument("--dialogue_file", dest="dialogue_file", type=str, default="./../data/dialogue_output/dialogue_file.txt", help="the file that used to save dialogue content.")
 parser.add_argument("--save_dialogue", dest="save_dialogue", type=int, default=0, help="save the dialogue? 1:Yes, 0:No")
+
+# TODO: user configuration.
+parser.add_argument("--allow_wrong_disease", dest="allow_wrong_disease", type=int, default=0, help="Allow the agent to inform wrong disease? 1:Yes, 0:No")
 
 # TODO: Learning rate for actor-critic and dqn.
 parser.add_argument("--dqn_learning_rate", dest="dqn_learning_rate", type=float, default=0.001, help="the learning rate of dqn.")
@@ -87,26 +90,30 @@ elif disease_number == 8:
     parser.add_argument("--input_size_dqn", dest="input_size_dqn", type=int, default=480, help="the input_size of DQN.")
 elif disease_number == 4:
     # for 4 diseases.
-    parser.add_argument("--action_set", dest="action_set", type=str, default='./../data/4_diseases/both/action_set.p',help='path and filename of the action set')
-    parser.add_argument("--slot_set", dest="slot_set", type=str, default='./../data/4_diseases/both/slot_set.p',help='path and filename of the slots set')
-    parser.add_argument("--goal_set", dest="goal_set", type=str, default='./../data/4_diseases/both/goal_set.p',help='path and filename of user goal')
-    parser.add_argument("--disease_symptom", dest="disease_symptom", type=str,default="./../data/4_diseases/both/disease_symptom.p",help="path and filename of the disease_symptom file")
+    parser.add_argument("--action_set", dest="action_set", type=str, default='./../data/dataset/1667/action_set.p',help='path and filename of the action set')
+    parser.add_argument("--slot_set", dest="slot_set", type=str, default='./../data/dataset/1667/slot_set.p',help='path and filename of the slots set')
+    parser.add_argument("--goal_set", dest="goal_set", type=str, default='./../data/dataset/1667/goal_set.p',help='path and filename of user goal')
+    parser.add_argument("--disease_symptom", dest="disease_symptom", type=str,default="./../data/dataset/1667/disease_symptom.p",help="path and filename of the disease_symptom file")
     parser.add_argument("--max_turn", dest="max_turn", type=int, default=22, help="the max turn in one episode.")
-    parser.add_argument("--input_size_dqn", dest="input_size_dqn", type=int, default=163, help="the input_size of DQN.")
+    parser.add_argument("--input_size_dqn", dest="input_size_dqn", type=int, default=159, help="the input_size of DQN.")
+    parser.add_argument("--reward_for_not_come_yet", dest="reward_for_not_come_yet", type=float,default=-1)
+    parser.add_argument("--reward_for_success", dest="reward_for_success", type=float,default=44)
+    parser.add_argument("--reward_for_fail", dest="reward_for_fail", type=float,default=-22)
+    parser.add_argument("--minus_left_slots", dest="minus_left_slots", type=int, default=1,help="Reward for success minus left slots? 1:Yes, 0:No")
 
 
 args = parser.parse_args()
 parameter = vars(args)
 
-
 agent_id = parameter.get("agent_id")
 dqn_id = parameter.get("dqn_id")
 disease_number = parameter.get("disease_number")
+max_turn = parameter.get("max_turn")
 
 if agent_id == 1:
-    checkpoint_path = "./../model/dqn/checkpoint_d" + str(disease_number) + "_agt" + str(agent_id) + "_dqn" + str(dqn_id) + "/"
+    checkpoint_path = "./../model/dqn/checkpoint04/checkpoint_d" + str(disease_number) + "_agt" + str(agent_id) + "_dqn" + str(dqn_id) + "_T" + str(max_turn) +  "/"
 else:
-    checkpoint_path = "./../model/dqn/checkpoint_d" + str(disease_number) + "_agt" + str(agent_id) + "/"
+    checkpoint_path = "./../model/dqn/checkpoint04/checkpoint_d" + str(disease_number) + "_agt" + str(agent_id) + "_T" + str(max_turn) +  "/"
 print(json.dumps(parameter, indent=2))
 time.sleep(8)
 

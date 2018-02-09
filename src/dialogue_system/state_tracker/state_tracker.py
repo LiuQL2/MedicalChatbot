@@ -15,7 +15,6 @@ class StateTracker(object):
     def __init__(self, user, agent,parameter):
         self.user = user
         self.agent = agent
-        self.max_turn = parameter["max_turn"]
         self._init()
 
     def get_state(self):
@@ -23,17 +22,18 @@ class StateTracker(object):
 
     def state_updater(self, user_action=None, agent_action=None):
         assert (user_action is None or agent_action is None), "user action and agent action cannot be None at the same time."
+        self.state["turn"] = self.turn
         if user_action is not None:
             self._state_update_with_user_acion(user_action=user_action)
         elif agent_action is not None:
             self._state_update_with_agent_action(agent_action=agent_action)
+        self.turn += 1
 
     def initialize(self):
         self._init()
 
     def _init(self):
-        self.dialogue_status = dialogue_configuration.NOT_COME_YET
-        self.turn = 1
+        self.turn = 0
         self.state = {
             "agent_action":None,
             "user_action":None,
@@ -59,8 +59,6 @@ class StateTracker(object):
         temp_action = copy.deepcopy(user_action)
         temp_action["current_slots"] = copy.deepcopy(self.state["current_slots"])# Save current_slots for every turn.
         self.state["history"].append(temp_action)
-        self.turn += 1
-        self.state["turn"] += 1
         for slot in user_action["request_slots"].keys():
             self.state["current_slots"]["user_request_slots"][slot] = user_action["request_slots"][slot]
 
@@ -116,8 +114,6 @@ class StateTracker(object):
         temp_action = copy.deepcopy(agent_action)
         temp_action["current_slots"] = copy.deepcopy(self.state["current_slots"])# save current_slots for every turn.
         self.state["history"].append(temp_action)
-        self.turn += 1
-        self.state["turn"] += 1
         # import json
         # print(json.dumps(agent_action, indent=2))
         for slot in agent_action["request_slots"].keys():

@@ -23,8 +23,6 @@ class DialogueManager(object):
     def __init__(self, user, agent, parameter):
         self.state_tracker = StateTracker(user=user, agent=agent, parameter=parameter)
         self.parameter = parameter
-        self.episode_over = False
-        self.dialogue_status = dialogue_configuration.NOT_COME_YET
         self.experience_replay_pool = deque(maxlen=self.parameter.get("experience_replay_pool_size"))
         self.inform_wrong_disease_count = 0
         self.trajectory_pool = deque(maxlen=self.parameter.get("trajectory_pool_size",100))
@@ -32,75 +30,74 @@ class DialogueManager(object):
         self.dialogue_output_file = parameter.get("dialogue_file")
         self.save_dialogue = parameter.get("save_dialogue")
 
-    def next(self,train_mode=1):
+    def next(self,save_record,train_mode, greedy_strategy):
         """
         The next two turn of this dialogue session. The agent will take action first and then followed by user simulator.
+        :param save_record: bool, save record?
         :param train_mode: int, 1: the purpose of simulation is to train the model, 0: just for simulation and the
                            parameters of the model will not be updated.
         :return: immediate reward for taking this agent action.
         """
         # Agent takes action.
         state = self.state_tracker.get_state()
-        agent_action, action_index = self.state_tracker.agent.next(state=state,turn=self.state_tracker.turn,train_mode=train_mode)
+        agent_action, action_index = self.state_tracker.agent.next(state=state,turn=self.state_tracker.turn,greedy_strategy=greedy_strategy)
         self.state_tracker.state_updater(agent_action=agent_action)
-        # print("turn:%2d, state for agent:\n" % (self.state_tracker.turn -1) , json.dumps(state))
+        # print("turn:%2d, state for agent:\n" % (state["turn"]) , json.dumps(state))
 
         # User takes action.
-        user_action, self.episode_over, self.dialogue_status = self.state_tracker.user.next(agent_action=agent_action,turn=self.state_tracker.turn)
+        user_action, reward, episode_over, dialogue_status = self.state_tracker.user.next(agent_action=agent_action,turn=self.state_tracker.turn)
         self.state_tracker.state_updater(user_action=user_action)
-        # print("turn:%2d, update after user :\n" % (self.state_tracker.turn - 1), json.dumps(state))
+        # print("turn:%2d, update after user :\n" % (state["turn"]), json.dumps(state))
 
-        if self.state_tracker.turn == self.state_tracker.max_turn:
-            self.episode_over = True
+        # if self.state_tracker.turn == self.state_tracker.max_turn:
+        #     episode_over = True
 
-        if self.dialogue_status == dialogue_configuration.INFORM_WRONG_DISEASE:
+        if dialogue_status == dialogue_configuration.INFORM_WRONG_DISEASE:
             self.inform_wrong_disease_count += 1
 
-        reward = self._reward_function()
-        if train_mode == 1:
+        # if dialogue_status == dialogue_configuration.DIALOGUE_SUCCESS:
+        #     print("success:", self.state_tracker.user.state)
+        # elif dialogue_status == dialogue_configuration.NOT_COME_YET:
+        #     print("not come:", self.state_tracker.user.state)
+        # else:
+        #     print("failed:", self.state_tracker.user.state)
+        # if len(self.state_tracker.user.state["rest_slots"].keys()) ==0:
+        #     print(self.state_tracker.user.goal)
+        #     print(dialogue_status,self.state_tracker.user.state)
+
+        if save_record == True:
             self.record_training_sample(
                 state=state,
                 agent_action=action_index,
                 next_state=self.state_tracker.get_state(),
                 reward=reward,
-                episode_over=self.episode_over
+                episode_over=episode_over
             )
         else:
             pass
 
         # Output the dialogue.
-        if self.episode_over == True and self.save_dialogue == 1 and train_mode == 0:
+        if episode_over == True and self.save_dialogue == 1 and train_mode == 0:
             state = self.state_tracker.get_state()
             goal = self.state_tracker.user.get_goal()
             self.__output_dialogue(state=state, goal=goal)
 
         # Record this episode.
-        if self.episode_over == True:
+        if episode_over == True:
             self.trajectory_pool.append(copy.deepcopy(self.trajectory))
 
-        return reward
+        return reward, episode_over,dialogue_status
 
     def initialize(self,train_mode=1, epoch_index=None):
         self.trajectory = []
         self.state_tracker.initialize()
-        self.episode_over = False
         self.inform_wrong_disease_count = 0
-        self.dialogue_status = dialogue_configuration.NOT_COME_YET
         user_action = self.state_tracker.user.initialize(train_mode = train_mode, epoch_index=epoch_index)
         self.state_tracker.state_updater(user_action=user_action)
         self.state_tracker.agent.initialize()
         # print("#"*30 + "\n" + "user goal:\n", json.dumps(self.state_tracker.user.goal))
-        # print("turn:%2d, initialized state:\n" % (self.state_tracker.turn - 1), json.dumps(self.state_tracker.state))
-
-    def _reward_function(self):
-        if self.dialogue_status == dialogue_configuration.NOT_COME_YET:
-            return dialogue_configuration.REWARD_FOR_NOT_COME_YET
-        elif self.dialogue_status == dialogue_configuration.DIALOGUE_SUCCESS:
-            return dialogue_configuration.REWARD_FOR_DIALOGUE_SUCCESS
-        elif self.dialogue_status == dialogue_configuration.DIALOGUE_FAILED:
-            return dialogue_configuration.REWARD_FOR_DIALOGUE_FAILED
-        elif self.dialogue_status == dialogue_configuration.INFORM_WRONG_DISEASE:
-            return dialogue_configuration.REWARD_FOR_INFORM_WRONG_DISEASE
+        # state = self.state_tracker.get_state()
+        # print("turn:%2d, initialized state:\n" % (state["turn"]), json.dumps(state))
 
     def record_training_sample(self, state, agent_action, reward, next_state, episode_over):
         state = self.state_tracker.agent.state_to_representation_last(state)

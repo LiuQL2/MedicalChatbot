@@ -107,7 +107,7 @@ class DataLoader(object):
             line = temp_line
 
             # 判断是否是四种疾病下的conversation，然后进行症状归一化。
-            # if line[0] in self.sample.keys() and str(line[1]) == str(3):#只抽取患者说的症状。2：患者说的话，3：医生说的话
+            # if line[0] in self.sample.keys() and str(line[1]) == str(2):#只抽取患者说的症状。2：患者说的话，3：医生说的话
             if line[0] in self.sample.keys():#抽取患者和医生说的症状。
                 for index in range(3, len(line)):
                     spoken_symptom = line[index].replace("\n","")

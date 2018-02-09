@@ -44,9 +44,12 @@ class StatisticsOfUserGoal(object):
             disease = goal["disease_tag"]
             explicit_inform_slots = goal["goal"]["explicit_inform_slots"]
             implicit_inform_slots = goal["goal"]["implicit_inform_slots"]
-            self.information[disease]["user_number"] += 1
-            self.information[disease]["explicit_number"] += len(explicit_inform_slots.keys())
-            self.information[disease]["implicit_number"] += len(implicit_inform_slots.keys())
+            if len(goal["goal"]["explicit_inform_slots"].keys()) >= 0 and \
+                len(goal["goal"]["implicit_inform_slots"].keys()) >= 1:
+
+                self.information[disease]["user_number"] += 1
+                self.information[disease]["explicit_number"] += len(explicit_inform_slots.keys())
+                self.information[disease]["implicit_number"] += len(implicit_inform_slots.keys())
 
         disease_list = list(self.information.keys())
         for disease in disease_list:
@@ -107,7 +110,7 @@ if __name__ == "__main__":
     # statics for the goal set, e.g., average number of explicit symptoms, average of number of implicit symptoms and the
     # number of user goal of each disease.
 
-    data_file = "./../src/dialogue_system/data/goal_set.p"
+    data_file = "./../src/dialogue_system/data/4_diseases/both/goal_set.p"
     save_file = "./../resources/goal_set_statistics.csv"
     stata = StatisticsOfUserGoal(data_file=data_file)
     stata.statistics()
