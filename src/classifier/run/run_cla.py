@@ -22,9 +22,9 @@ parser = argparse.ArgumentParser()
 # parser.add_argument("--goal_set", dest="goal_set", type=str, default='./../../dialogue_system/data/10_diseases01/goal_set.p', help='path and filename of user goal')
 # parser.add_argument("--disease_symptom", dest="disease_symptom", type=str, default="./../../dialogue_system/data/10_diseases01/disease_symptom.p", help="path and filename of the disease_symptom file")
 
-parser.add_argument("--slot_set", dest="slot_set", type=str, default='./../../dialogue_system/data/slot_set.p', help='path and filename of the slots set')
-parser.add_argument("--goal_set", dest="goal_set", type=str, default='./../../dialogue_system/data/goal_set.p', help='path and filename of user goal')
-parser.add_argument("--disease_symptom", dest="disease_symptom", type=str, default="./../../dialogue_system/data/disease_symptom.p", help="path and filename of the disease_symptom file")
+parser.add_argument("--slot_set", dest="slot_set", type=str, default='./../../dialogue_system/data/4_diseases/both/slot_set.p', help='path and filename of the slots set')
+parser.add_argument("--goal_set", dest="goal_set", type=str, default='./../../dialogue_system/data/4_diseases/both/goal_set.p', help='path and filename of user goal')
+parser.add_argument("--disease_symptom", dest="disease_symptom", type=str, default="./../../dialogue_system/data/4_diseases/both/disease_symptom.p", help="path and filename of the disease_symptom file")
 
 
 parser.add_argument("--explicit_number", dest="explicit_number", type=int, default=0, help="the number of explicit symptoms of used sample")
@@ -36,7 +36,7 @@ parser.add_argument("--hidden_size", dest="hidden_size",type=int, default=40, he
 parser.add_argument("--train_feature", dest="train_feature", type=str, default="ex", help="only use explicit symptom for classification? ex:yes, ex&im:no")
 parser.add_argument("--test_feature", dest="test_feature", type=str, default="ex", help="only use explicit symptom for testing? ex:yes, ex&im:no")
 parser.add_argument("--checkpoint_path",dest="checkpoint_path", type=str, default="./../model/checkpoint/", help="the folder where models save to, ending with /.")
-parser.add_argument("--saved_model", dest="saved_model", type=str, default="./../model/checkpoint/model_s0.89_r735.0_t7.08_wd1.55_e20.ckpt")
+parser.add_argument("--saved_model", dest="saved_model", type=str, default="./../model/dqn/checkpoint_d4_agt1_dqn1/model_d4_agent1_dqn1_s0.602_r17.036_t4.326_wd0.0_e214.ckpt")
 parser.add_argument("--learning_rate", dest="learning_rate", type=float, default=0.2,help="the learning rate when training the model.")
 
 args = parser.parse_args()
@@ -52,6 +52,8 @@ def run():
     classifier = SymptomClassifier(goal_set=goal_set,symptom_set=slot_set,disease_symptom=disease_symptom,hidden_size=hidden_size,parameter=parameter,k_fold=5)
     classifier.train_sklearn_svm()
     print(classifier.disease_sample_count)
+    # classifier.sample_to_file("./../data/goal_set.json")
+    classifier.dump_goal_set("/Users/qianlong/Desktop/goal_set.p")
 
 
     # print("##"*30+"\nSelf-report as features\n"+"##"*30)
