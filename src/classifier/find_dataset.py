@@ -72,7 +72,7 @@ class Finder(object):
         if save_set:
             file_name = save_path + "goal_set_" + str(gap) + ".p"
             print("saving...",file_name)
-            self.dump_goal_set(dump_file_name=file_name)
+            # self.dump_goal_set(dump_file_name=file_name)
         return gap,save_set
 
     def __goal_by_disease__(self):
@@ -185,7 +185,7 @@ class Finder(object):
             disease_accuracy[key]["ex&im"] = float("%.4f" % (value["ex&im"] / len(self.data_set.keys())))
             disease_accuracy[key]["ex"] = float("%.4f" % (value["ex"] / len(self.data_set.keys())))
 
-        # print(disease_accuracy)
+        print(disease_accuracy)
         return disease_accuracy
 
     def _train_and_evaluate_svm_one_fold_(self, train_set, test_set):
@@ -313,7 +313,8 @@ class Finder(object):
 
 if __name__ == "__main__":
     # goal_set,symptom_set, disease_symptom
-    goal_set_file = './../dialogue_system/data/4_diseases/both/goal_set.p'
+    # goal_set_file = './../dialogue_system/data/4_diseases/both/goal_set.p'
+    goal_set_file = './../dialogue_system/data/dataset/1100/goal_set.p'
     slot_set_file = './../dialogue_system/data/4_diseases/both/slot_set.p'
     disease_symptom_file = './../dialogue_system/data/4_diseases/both/disease_symptom.p'
     save_path = "./../dialogue_system/data/found_dataset/"

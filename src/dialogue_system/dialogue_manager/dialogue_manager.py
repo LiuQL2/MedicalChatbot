@@ -52,12 +52,12 @@ class DialogueManager(object):
         # if self.state_tracker.turn == self.state_tracker.max_turn:
         #     episode_over = True
 
-        if dialogue_status == dialogue_configuration.INFORM_WRONG_DISEASE:
+        if dialogue_status == dialogue_configuration.DIALOGUE_STATUS_INFORM_WRONG_DISEASE:
             self.inform_wrong_disease_count += 1
 
-        # if dialogue_status == dialogue_configuration.DIALOGUE_SUCCESS:
+        # if dialogue_status == dialogue_configuration.DIALOGUE_STATUS_SUCCESS:
         #     print("success:", self.state_tracker.user.state)
-        # elif dialogue_status == dialogue_configuration.NOT_COME_YET:
+        # elif dialogue_status == dialogue_configuration.DIALOGUE_STATUS_NOT_COME_YET:
         #     print("not come:", self.state_tracker.user.state)
         # else:
         #     print("failed:", self.state_tracker.user.state)

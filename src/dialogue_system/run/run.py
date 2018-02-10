@@ -90,15 +90,16 @@ elif disease_number == 8:
     parser.add_argument("--input_size_dqn", dest="input_size_dqn", type=int, default=480, help="the input_size of DQN.")
 elif disease_number == 4:
     # for 4 diseases.
-    parser.add_argument("--action_set", dest="action_set", type=str, default='./../data/dataset/1667/action_set.p',help='path and filename of the action set')
-    parser.add_argument("--slot_set", dest="slot_set", type=str, default='./../data/dataset/1667/slot_set.p',help='path and filename of the slots set')
-    parser.add_argument("--goal_set", dest="goal_set", type=str, default='./../data/dataset/1667/goal_set.p',help='path and filename of user goal')
-    parser.add_argument("--disease_symptom", dest="disease_symptom", type=str,default="./../data/dataset/1667/disease_symptom.p",help="path and filename of the disease_symptom file")
+    parser.add_argument("--action_set", dest="action_set", type=str, default='./../data/dataset/1100/action_set.p',help='path and filename of the action set')
+    parser.add_argument("--slot_set", dest="slot_set", type=str, default='./../data/dataset/1100/slot_set.p',help='path and filename of the slots set')
+    parser.add_argument("--goal_set", dest="goal_set", type=str, default='./../data/dataset/1100/goal_set.p',help='path and filename of user goal')
+    parser.add_argument("--disease_symptom", dest="disease_symptom", type=str,default="./../data/dataset/1100/disease_symptom.p",help="path and filename of the disease_symptom file")
     parser.add_argument("--max_turn", dest="max_turn", type=int, default=22, help="the max turn in one episode.")
     parser.add_argument("--input_size_dqn", dest="input_size_dqn", type=int, default=159, help="the input_size of DQN.")
     parser.add_argument("--reward_for_not_come_yet", dest="reward_for_not_come_yet", type=float,default=-1)
     parser.add_argument("--reward_for_success", dest="reward_for_success", type=float,default=44)
     parser.add_argument("--reward_for_fail", dest="reward_for_fail", type=float,default=-22)
+    parser.add_argument("--reward_for_inform_right_symptom", dest="reward_for_inform_right_symptom", type=float,default=0.1*22)
     parser.add_argument("--minus_left_slots", dest="minus_left_slots", type=int, default=1,help="Reward for success minus left slots? 1:Yes, 0:No")
 
 

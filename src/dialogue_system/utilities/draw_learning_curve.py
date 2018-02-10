@@ -62,7 +62,7 @@ class Ploter(object):
 
 if __name__ == "__main__":
     file_name = "./../model/dqn/learning_rate/learning_rate_d4_e999_agent1_dqn1.p"
-    file_name = "/Users/qianlong/Desktop/learning_rate_d4_e_agent1_dqn1_T22_lr0.001_SR44_mls0_gamma0.95_epsilon0.1_799.p"
+    file_name = "/Users/qianlong/Desktop/learning_rate_d4_e_agent1_dqn1_T22_lr0.001_SR44_mls0_gamma0.95_epsilon0.1_1499.p"
     save_name = file_name + ".png"
     ploter = Ploter(file_name)
     ploter.load_data(performance_file=file_name, label="DQN Agent")

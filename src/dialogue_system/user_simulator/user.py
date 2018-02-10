@@ -127,7 +127,7 @@ class User(object):
             # assert (epoch_index != None), "epoch index is None when evaluating."
             # self.goal = self.goal_set["test"][epoch_index]
         self.episode_over = False
-        self.dialogue_status = dialogue_configuration.NOT_COME_YET
+        self.dialogue_status = dialogue_configuration.DIALOGUE_STATUS_NOT_COME_YET
         self.constraint_check = dialogue_configuration.CONSTRAINT_CHECK_FAILURE
 
     def _assemble_user_action(self):
@@ -148,7 +148,7 @@ class User(object):
         if self.state["turn"] == (self.max_turn - 2):
             self.episode_over = True
             self.state["action"] = dialogue_configuration.CLOSE_DIALOGUE
-            self.dialogue_status = dialogue_configuration.DIALOGUE_FAILED
+            self.dialogue_status = dialogue_configuration.DIALOGUE_STATUS_FAILED
         else:
             pass
 
@@ -211,11 +211,16 @@ class User(object):
                 if slot in self.goal["goal"]["explicit_inform_slots"].keys():
                     self.state["action"] = "inform"
                     self.state["inform_slots"][slot] = self.goal["goal"]["explicit_inform_slots"][slot]
+                    # For requesting right symptoms of the user goal.
+                    self.dialogue_status = dialogue_configuration.DIALOGUE_STATUS_INFORM_RIGHT_SYMPTOM
                     if slot in self.state["rest_slots"].keys(): self.state["rest_slots"].pop(slot)
                 elif slot in self.goal["goal"]["implicit_inform_slots"].keys():
                     self.state["action"] = "inform"
                     self.state["inform_slots"][slot] = self.goal["goal"]["implicit_inform_slots"][slot]
+                    # For requesting right symptoms of the user goal.
+                    self.dialogue_status = dialogue_configuration.DIALOGUE_STATUS_INFORM_RIGHT_SYMPTOM
                     if slot in self.state["rest_slots"].keys(): self.state["rest_slots"].pop(slot)
+                # The requested slots not in the user goals.
                 else:
                     if len(self.state["request_slots"].keys()) == 0 and len(self.state["rest_slots"].keys()) == 0:
                         self.state["action"] = dialogue_configuration.THANKS
@@ -273,7 +278,7 @@ class User(object):
     def _response_thanks(self, agent_action):
         # TODO (Qianlong): response to thanks action.
         self.episode_over = True
-        self.dialogue_status = dialogue_configuration.DIALOGUE_SUCCESS
+        self.dialogue_status = dialogue_configuration.DIALOGUE_STATUS_SUCCESS
 
         request_slot_set = copy.deepcopy(list(self.state["request_slots"].keys()))
         if "disease" in request_slot_set:
@@ -284,20 +289,20 @@ class User(object):
 
         # The dialogue is failed if there are still slots in rest_slots and request_slots.
         if len(request_slot_set) > 0 or len(rest_slot_set) > 0:
-            self.dialogue_status = dialogue_configuration.DIALOGUE_FAILED
+            self.dialogue_status = dialogue_configuration.DIALOGUE_STATUS_FAILED
 
         for slot in self.state["history"].keys():
             if slot in self.goal["goal"]["explicit_inform_slots"].keys() and \
                 self.state["history"][slot] != self.goal["goal"]["explicit_inform_slots"][slot]:
-                self.dialogue_status = dialogue_configuration.DIALOGUE_FAILED
+                self.dialogue_status = dialogue_configuration.DIALOGUE_STATUS_FAILED
             elif slot in self.goal["goal"]["implicit_inform_slots"].keys() and \
                 self.state["history"][slot] != self.goal["goal"]["implicit_inform_slots"][slot]:
-                self.dialogue_status = dialogue_configuration.DIALOGUE_FAILED
+                self.dialogue_status = dialogue_configuration.DIALOGUE_STATUS_FAILED
         if "disease" in agent_action["inform_slots"].keys():
             if agent_action["inform_slots"]["disease"] != self.goal["disease_tag"]:
-                self.dialogue_status = dialogue_configuration.DIALOGUE_FAILED
+                self.dialogue_status = dialogue_configuration.DIALOGUE_STATUS_FAILED
         if self.constraint_check == dialogue_configuration.CONSTRAINT_CHECK_FAILURE:
-            self.dialogue_status = dialogue_configuration.DIALOGUE_FAILED
+            self.dialogue_status = dialogue_configuration.DIALOGUE_STATUS_FAILED
 
     ##########################################
     # Response for inform where explicit_inform_slots and implicit_inform_slots are handled in the same way.
@@ -314,7 +319,7 @@ class User(object):
         # The agent informed the right disease and dialogue is over.
         if "disease" in agent_action["inform_slots"].keys() and agent_action["inform_slots"]["disease"] == self.goal["disease_tag"]:
             self.state["action"] = dialogue_configuration.CLOSE_DIALOGUE
-            self.dialogue_status = dialogue_configuration.DIALOGUE_SUCCESS
+            self.dialogue_status = dialogue_configuration.DIALOGUE_STATUS_SUCCESS
             self.state["history"]["disease"] = agent_action["inform_slots"]["disease"]
             self.episode_over = True
             self.state["inform_slots"].clear()
@@ -328,11 +333,11 @@ class User(object):
             if self.allow_wrong_disease == 1:
                 self.state["action"] = "deny"
                 self.state["inform_slots"]["disease"] = agent_action["inform_slots"]["disease"]
-                self.dialogue_status = dialogue_configuration.INFORM_WRONG_DISEASE
+                self.dialogue_status = dialogue_configuration.DIALOGUE_STATUS_INFORM_WRONG_DISEASE
             # The informed disease is wrong, and the dialogue is failed.
             else:
                 self.state["action"] = dialogue_configuration.CLOSE_DIALOGUE
-                self.dialogue_status = dialogue_configuration.DIALOGUE_FAILED
+                self.dialogue_status = dialogue_configuration.DIALOGUE_STATUS_FAILED
                 self.episode_over = True
                 self.state["inform_slots"].clear()
                 self.state["explicit_inform_slots"].clear()
@@ -345,6 +350,8 @@ class User(object):
                 if slot in user_all_inform_slots.keys():
                     # Agent informed correct slot.
                     if agent_all_inform_slots[slot] == user_all_inform_slots[slot]:
+                        # dialogue status becomes DIALOGUE_STATUS_INFORM_RIGHT_SYMPTOM.
+                        self.dialogue_status = dialogue_configuration.DIALOGUE_STATUS_INFORM_RIGHT_SYMPTOM
                         self.state["history"][slot] = agent_all_inform_slots[slot]
                         if slot in self.state["rest_slots"].keys(): self.state["rest_slots"].pop(slot)
 
@@ -459,21 +466,24 @@ class User(object):
             return False
 
     def _reward_function(self):
-        if self.dialogue_status == dialogue_configuration.NOT_COME_YET:
+        if self.dialogue_status == dialogue_configuration.DIALOGUE_STATUS_NOT_COME_YET:
             return self.parameter.get("reward_for_not_come_yet")
             # return dialogue_configuration.REWARD_FOR_NOT_COME_YET
-        elif self.dialogue_status == dialogue_configuration.DIALOGUE_SUCCESS:
+        elif self.dialogue_status == dialogue_configuration.DIALOGUE_STATUS_SUCCESS:
             success_reward = self.parameter.get("reward_for_success")
-            # success_reward = dialogue_configuration.REWARD_FOR_DIALOGUE_SUCCESS
+            # success_reward = dialogue_configuration.REWARD_FOR_DIALOGUE_STATUS_SUCCESS
             if self.parameter.get("minus_left_slots") == 1:
                 return success_reward - len(self.state["rest_slots"])
             else:
                 return success_reward
-        elif self.dialogue_status == dialogue_configuration.DIALOGUE_FAILED:
+        elif self.dialogue_status == dialogue_configuration.DIALOGUE_STATUS_FAILED:
             return self.parameter.get("reward_for_fail")
-            # return dialogue_configuration.REWARD_FOR_DIALOGUE_FAILED
-        elif self.dialogue_status == dialogue_configuration.INFORM_WRONG_DISEASE:
+            # return dialogue_configuration.REWARD_FOR_DIALOGUE_STATUS_FAILED
+        elif self.dialogue_status == dialogue_configuration.DIALOGUE_STATUS_INFORM_WRONG_DISEASE:
             return dialogue_configuration.REWARD_FOR_INFORM_WRONG_DISEASE
+        elif self.dialogue_status == dialogue_configuration.DIALOGUE_STATUS_INFORM_RIGHT_SYMPTOM:
+            return self.parameter.get("reward_for_inform_right_symptom")
+            # return dialogue_configuration.REWARD_FOR_INFORM_RIGHT_RIGHT_SYMPTOM
 
     def get_goal(self):
         return self.goal

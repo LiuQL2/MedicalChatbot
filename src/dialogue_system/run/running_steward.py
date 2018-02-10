@@ -95,15 +95,15 @@ class RunningSteward(object):
                 total_reward += reward
             total_truns += self.dialogue_manager.state_tracker.turn
             inform_wrong_disease_count += self.dialogue_manager.inform_wrong_disease_count
-            if dialogue_status == dialogue_configuration.DIALOGUE_SUCCESS:
+            if dialogue_status == dialogue_configuration.DIALOGUE_STATUS_SUCCESS:
                 success_count += 1
                 if self.dialogue_manager.inform_wrong_disease_count == 0:
                     absolute_success_count += 1
-        success_rate = float(success_count) / epoch_size
-        absolute_success_rate = float(absolute_success_count) / epoch_size
-        average_reward = float(total_reward) / epoch_size
-        average_turn = float(total_truns) / epoch_size
-        average_wrong_disease = float(inform_wrong_disease_count) / epoch_size
+        success_rate = float("%.3f" % (float(success_count) / epoch_size))
+        absolute_success_rate = float("%.3f" % (float(absolute_success_count) / epoch_size))
+        average_reward = float("%.3f" % (float(total_reward) / epoch_size))
+        average_turn = float("%.3f" % (float(total_truns) / epoch_size))
+        average_wrong_disease = float("%.3f" % (float(inform_wrong_disease_count) / epoch_size))
         res = {"success_rate":success_rate, "average_reward": average_reward, "average_turn": average_turn, "average_wrong_disease":average_wrong_disease,"ab_success_rate":absolute_success_rate}
         # print("%3d simulation success rate %s, ave reward %s, ave turns %s, ave wrong disease %s" % (index,res['success_rate'], res['average_reward'], res['average_turn'], res["average_wrong_disease"]))
         return res
@@ -132,7 +132,7 @@ class RunningSteward(object):
                 total_reward += reward
             total_truns += self.dialogue_manager.state_tracker.turn
             inform_wrong_disease_count += self.dialogue_manager.inform_wrong_disease_count
-            if dialogue_status == dialogue_configuration.DIALOGUE_SUCCESS:
+            if dialogue_status == dialogue_configuration.DIALOGUE_STATUS_SUCCESS:
                 success_count += 1
                 if self.dialogue_manager.inform_wrong_disease_count == 0:
                     absolute_success_count += 1
@@ -175,7 +175,11 @@ class RunningSteward(object):
         dqn_id = self.parameter.get("dqn_id")
         disease_number = self.parameter.get("disease_number")
         lr = self.parameter.get("dqn_learning_rate")
-        success_reward = self.parameter.get("reward_for_success")
+        reward_for_success = self.parameter.get("reward_for_success")
+        reward_for_fail = self.parameter.get("reward_for_fail")
+        reward_for_not_come_yet = self.parameter.get("reward_for_not_come_yet")
+        reward_for_inform_right_symptom = self.parameter.get("reward_for_inform_right_symptom")
+
         max_turn = self.parameter.get("max_turn")
         minus_left_slots = self.parameter.get("minus_left_slots")
         gamma = self.parameter.get("gamma")
@@ -183,12 +187,14 @@ class RunningSteward(object):
 
         if agent_id == 1:
             file_name = "learning_rate_d" + str(disease_number) + "_e" + "_agent" + str(agent_id) + \
-                        "_dqn" + str(dqn_id) + "_T" + str(max_turn) + "_lr" + str(lr) + "_SR" + str(success_reward) +\
-                        "_mls" + str(minus_left_slots) + "_gamma" + str(gamma) + "_epsilon" + str(epsilon) + "_" + str(epoch_index) + ".p"
+                        "_dqn" + str(dqn_id) + "_T" + str(max_turn) + "_lr" + str(lr) + "_RFS" + str(reward_for_success) +\
+                          "_RFF" + str(reward_for_fail) + "_RFNCY" + str(reward_for_not_come_yet) + "_RFIRS" + str(reward_for_inform_right_symptom) +\
+                          "_mls" + str(minus_left_slots) + "_gamma" + str(gamma) + "_epsilon" + str(epsilon) + "_" + str(epoch_index) + ".p"
         else:
             file_name = "learning_rate_d" + str(disease_number) + "_e" + "_agent" + str(agent_id) + \
-                        "_T" + str(max_turn) + "_lr" + str(lr) + "_SR" + str(success_reward) +\
-                        "_mls" + str(minus_left_slots) + "_gamma" + str(gamma) + "_epsilon" + str(epsilon) + "_" + str(epoch_index) + ".p"
+                        "_T" + str(max_turn) + "_lr" + str(lr) + "_RFS" + str(reward_for_success) +\
+                          "_RFF" + str(reward_for_fail) + "_RFNCY" + str(reward_for_not_come_yet) + "_RFIRS" + str(reward_for_inform_right_symptom) +\
+                          "_mls" + str(minus_left_slots) + "_gamma" + str(gamma) + "_epsilon" + str(epsilon) + "_" + str(epoch_index) + ".p"
 
         pickle.dump(file=open(self.parameter.get("performance_save_path") + file_name, "wb"), obj=self.learning_curve)
 
@@ -198,14 +204,19 @@ class RunningSteward(object):
         dqn_id = self.parameter.get("dqn_id")
         disease_number = self.parameter.get("disease_number")
         lr = self.parameter.get("dqn_learning_rate")
-        success_reward = self.parameter.get("reward_for_success")
+        reward_for_success = self.parameter.get("reward_for_success")
+        reward_for_fail = self.parameter.get("reward_for_fail")
+        reward_for_not_come_yet = self.parameter.get("reward_for_not_come_yet")
+        reward_for_inform_right_symptom = self.parameter.get("reward_for_inform_right_symptom")
+
         max_turn = self.parameter.get("max_turn")
         minus_left_slots = self.parameter.get("minus_left_slots")
         gamma = self.parameter.get("gamma")
         epsilon = self.parameter.get("epsilon")
         data_set_name = self.parameter.get("goal_set").split("/")[-2]
-        info = "learning_rate_d" + str(disease_number) + "_e" + "_agent" + str(agent_id) + \
-               "_dqn" + str(dqn_id) + "_T" + str(max_turn) + "_lr" + str(lr) + "_SR" + str(success_reward) + \
-               "_mls" + str(minus_left_slots) + "_gamma" + str(gamma) + "_epsilon" + str(epsilon) + "_data" + str(data_set_name)
+        info = "learning_rate_d" + str(disease_number) + "_agent" + str(agent_id) + \
+               "_dqn" + str(dqn_id) + "_T" + str(max_turn) + "_lr" + str(lr) + "_RFS" + str(reward_for_success) +\
+                          "_RFF" + str(reward_for_fail) + "_RFNCY" + str(reward_for_not_come_yet) + "_RFIRS" + str(reward_for_inform_right_symptom) +\
+                          "_mls" + str(minus_left_slots) + "_gamma" + str(gamma) + "_epsilon" + str(epsilon) + "_data" + str(data_set_name)
 
         print("[INFO]:", info)

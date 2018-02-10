@@ -153,7 +153,7 @@ class DQN1(object):
     def __build_model(self):
         device = self.parameter.get("device_for_tf")
         # with tf.device("/device:GPU:1"):
-        with tf.device("/gpu:1"):
+        with tf.device("/gpu:3"):
             self.graph = tf.Graph()
 
             with self.graph.as_default():
