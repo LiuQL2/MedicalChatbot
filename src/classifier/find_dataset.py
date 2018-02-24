@@ -308,7 +308,7 @@ class Finder(object):
                     # if symptom in ["腹泻","咳嗽", "肺纹理增粗","涨肚"]:
                         keep_or_not = False
                         break
-        return keep_or_not
+        return True
 
 
 if __name__ == "__main__":

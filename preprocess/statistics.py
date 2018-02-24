@@ -34,6 +34,7 @@ class StatisticsOfUserGoal(object):
 
     def statistics(self):
         for goal in self.goal_set:
+            print(json.dumps(goal,indent=2))
             disease = goal["disease_tag"]
             if disease not in self.information.keys():
                 self.information[disease] = {}
@@ -84,13 +85,6 @@ class StatisticsOfDiseaseSymptom(object):
 
         result = pd.DataFrame(index=self.disease_list,columns=self.disease_list)
 
-        # for disease1 in self.disease_list:
-        #     for disease2 in self.disease_list:
-        #         count = 0
-        #         for symptom1 in disease_symptoms[disease1]:
-        #             if symptom1 in disease_symptoms[disease2]: count += 1
-        #         result.loc[disease1, disease2] = count
-
         for index1 in range(0, len(self.disease_list), 1):
             for index2 in range(index1, len(self.disease_list), 1):
                 count = 0
@@ -110,7 +104,7 @@ if __name__ == "__main__":
     # statics for the goal set, e.g., average number of explicit symptoms, average of number of implicit symptoms and the
     # number of user goal of each disease.
 
-    data_file = "./../src/dialogue_system/data/4_diseases/both/goal_set.p"
+    data_file = "./../src/dialogue_system/data/dataset/1100/goal_set.p"
     save_file = "./../resources/goal_set_statistics.csv"
     stata = StatisticsOfUserGoal(data_file=data_file)
     stata.statistics()
