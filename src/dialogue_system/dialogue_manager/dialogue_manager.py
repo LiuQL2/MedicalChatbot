@@ -134,8 +134,13 @@ class DialogueManager(object):
         Train actor-critic.
         :return:
         """
-        for trajectory in self.trajectory_pool:
-            self.state_tracker.agent.train(trajectory = trajectory)
+        trajectory_pool = list(self.trajectory_pool)
+        batch_size = self.parameter.get("batch_size",16)
+        for index in range(0, len(self.trajectory_pool), batch_size):
+            stop = max(len(self.trajectory_pool),index + batch_size)
+            batch_trajectory = trajectory_pool[index:stop]
+            self.state_tracker.agent.train(trajectories=batch_trajectory)
+
 
     def __output_dialogue(self,state, goal):
         history = state["history"]

@@ -26,7 +26,20 @@ class ActorCritic(object):
         self.session = tf.Session(graph=self.graph, config=config)
         self.session.run(self.initializer)
 
-    def train(self, trajectory):
+    def train(self, trajectories):
+        b_states, b_td_errors, b_taken_actions, b_critic_labels = [],[],[],[]
+        for trajectory in trajectories:
+            states, td_errors, taken_actions, critic_labels = self.__process_trajectory__(trajectory)
+            b_states.extend(states)
+            b_td_errors.extend(td_errors)
+            b_taken_actions.extend(taken_actions)
+            b_critic_labels.extend(critic_labels)
+        # normalize rewards; don't divide by 0
+        b_td_errors = (b_td_errors - np.mean(b_td_errors)) / (np.std(b_td_errors) + 1e-10 )
+        self.critic.train(sess=self.session,Xs=b_states,Ys=b_critic_labels)
+        self.actor.train(sess=self.session,inputs=b_states,actions=b_taken_actions,td_errors=b_td_errors)
+
+    def __process_trajectory__(self, trajectory):
         # state, agent_action, reward, next_state, episode_over
         states = []
         next_states = []
@@ -50,7 +63,6 @@ class ActorCritic(object):
             if not episode_over:
                 label = float(self.gamma * next_state_value + reward)
             critic_labels.append([label])
-        self.critic.train(sess=self.session,Xs=states,Ys=critic_labels)
 
         state_values = self.critic.current_predict(sess=self.session,Xs=states)
         taken_actions = []
@@ -68,10 +80,7 @@ class ActorCritic(object):
                 label = float(self.gamma * next_state_value + reward)
             td_errors.append(label - state_value)
             taken_actions.append(action)
-
-        # normalize rewards; don't divide by 0
-        td_errors = (td_errors - np.mean(td_errors)) / (np.std(td_errors) + 1e-10 )
-        self.actor.train(sess=self.session,inputs=states,actions=taken_actions,td_errors=td_errors)
+        return states, td_errors, taken_actions, critic_labels
 
     def actor_predict(self, Xs):
         return self.actor.current_predict(sess=self.session,Xs=Xs)
@@ -137,7 +146,7 @@ class Actor(object):
             update_assign[key] = tf.assign(self.variable["target_network"][key],value=self.variable["current_network"][key].value(),name=key+"-"+key)
         return update_assign
 
-    def train(self, sess,inputs, actions, td_errors):
+    def train(self, sess, inputs, actions, td_errors):
         feed_dict = {self.input:inputs, self.td_error:td_errors,self.take_actions:actions}
         sess.run(fetches=self.optimizer, feed_dict=feed_dict)
 

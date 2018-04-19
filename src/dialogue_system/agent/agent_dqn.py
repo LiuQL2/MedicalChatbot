@@ -58,3 +58,6 @@ class AgentDQN(Agent):
 
     def update_target_network(self):
         self.dqn.update_target_network()
+
+    def save_model(self, model_performance,episodes_index, checkpoint_path = None):
+        self.dqn.save_model(model_performance=model_performance, episodes_index = episodes_index, checkpoint_path=checkpoint_path)

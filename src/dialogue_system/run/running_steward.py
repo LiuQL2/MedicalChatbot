@@ -70,7 +70,7 @@ class RunningSteward(object):
                 self.dialogue_manager.experience_replay_pool = deque(maxlen=self.parameter.get("experience_replay_pool_size"))
                 self.simulation_epoch(epoch_size=self.epoch_size,train_mode=train_mode)
                 if save_model == 1:
-                    self.dialogue_manager.state_tracker.agent.dqn.save_model(model_performance=result, episodes_index = index, checkpoint_path=self.checkpoint_path)
+                    self.dialogue_manager.state_tracker.agent.save_model(model_performance=result, episodes_index = index, checkpoint_path=self.checkpoint_path)
                     print("The model was saved.")
                 else:
                     pass
