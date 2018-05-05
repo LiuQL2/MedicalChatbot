@@ -49,6 +49,7 @@ class RunningSteward(object):
         """
         save_model = self.parameter.get("save_model")
         self.dialogue_manager.set_agent(agent=agent)
+        # self.dialogue_manager.state_tracker.user.set_max_turn(max_turn=self.parameter.get('max_turn'))
         for index in range(0, epoch_number,1):
             # Training AgentDQN with experience replay
             if train_mode == 1 and isinstance(self.dialogue_manager.state_tracker.agent, AgentDQN):
@@ -163,6 +164,7 @@ class RunningSteward(object):
         :return: nothing to return.
         """
         self.dialogue_manager.set_agent(agent=agent)
+        # self.dialogue_manager.state_tracker.user.set_max_turn(max_turn = 2*len(self.slot_set))
         for index in range(0,epoch_number,1):
             res = self.simulation_epoch(epoch_size=self.epoch_size,train_mode=1)
             print("%3d simulation SR %s, ABSR %s,ave reward %s, ave turns %s, ave wrong disease %s" % (

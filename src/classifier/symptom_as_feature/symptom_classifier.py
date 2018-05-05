@@ -83,7 +83,7 @@ class SymptomClassifier(object):
         all_sample = []
         for disease,goal_list in goal_by_disease.items():
             random.shuffle(goal_list)
-            all_sample = all_sample + list(random.sample(goal_list, 300))
+            all_sample = all_sample + list(random.sample(goal_list, len(goal_list)))
 
 
         random.shuffle(all_sample)
@@ -215,8 +215,8 @@ class SymptomClassifier(object):
         import csv
         train_feature = self.parameter.get("train_feature")
         test_feature = self.parameter.get("test_feature")
-        error_id_file = open("/Users/qianlong/Desktop/error_id_"+train_feature+"_" + test_feature+".csv","a+",encoding="utf8")
-        writer = csv.writer(error_id_file)
+        # error_id_file = open("/Users/qianlong/Desktop/error_id_"+train_feature+"_" + test_feature+".csv","a+",encoding="utf8")
+        # writer = csv.writer(error_id_file)
 
         for disease in self.disease_sample_count.keys():
             disease_accuracy[disease] = {}
@@ -239,7 +239,7 @@ class SymptomClassifier(object):
         for disease in self.disease_sample_count.keys():
             disease_accuracy[disease]["accuracy"] = disease_accuracy[disease]["success_count"] / disease_accuracy[disease]["total"]
         disease_accuracy["total_accuracy"]["accuracy"] = count / len(labels)
-        error_id_file.close()
+        # error_id_file.close()
         return disease_accuracy
 
     def sample_to_file(self,file_name):

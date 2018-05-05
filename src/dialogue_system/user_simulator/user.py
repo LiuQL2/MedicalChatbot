@@ -507,3 +507,6 @@ class User(object):
                     disease_sample_count[goal["disease_tag"]] += 1
             print(key, len(temp_goal_set[key]))
         return temp_goal_set, disease_sample_count
+
+    def set_max_turn(self, max_turn):
+        self.max_turn = max_turn

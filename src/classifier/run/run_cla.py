@@ -12,21 +12,9 @@ from src.classifier.self_report_as_feature.report_classifier import ReportClassi
 
 parser = argparse.ArgumentParser()
 
-# for 7 diseases
-# parser.add_argument("--slot_set", dest="slot_set", type=str, default='./../../dialogue_system/data/10_diseases/slot_set.p', help='path and filename of the slots set')
-# parser.add_argument("--goal_set", dest="goal_set", type=str, default='./../../dialogue_system/data/10_diseases/goal_set.p', help='path and filename of user goal')
-# parser.add_argument("--disease_symptom", dest="disease_symptom", type=str, default="./../../dialogue_system/data/10_diseases/disease_symptom.p", help="path and filename of the disease_symptom file")
-
-# for 10 diseases
-# parser.add_argument("--slot_set", dest="slot_set", type=str, default='./../../dialogue_system/data/10_diseases01/slot_set.p', help='path and filename of the slots set')
-# parser.add_argument("--goal_set", dest="goal_set", type=str, default='./../../dialogue_system/data/10_diseases01/goal_set.p', help='path and filename of user goal')
-# parser.add_argument("--disease_symptom", dest="disease_symptom", type=str, default="./../../dialogue_system/data/10_diseases01/disease_symptom.p", help="path and filename of the disease_symptom file")
-
-parser.add_argument("--goal_set", dest="goal_set", type=str, default="./../../dialogue_system/data/dataset/1100/goal_set.p", help='path and filename of user goal')
-# parser.add_argument("--goal_set", dest="goal_set", type=str, default='/Users/qianlong/Desktop/goal_set.p', help='path and filename of user goal')
-# parser.add_argument("--goal_set", dest="goal_set", type=str, default='./../../dialogue_system/data/4_diseases/both/goal_set.p', help='path and filename of user goal')
-parser.add_argument("--slot_set", dest="slot_set", type=str, default='./../../dialogue_system/data/4_diseases/both/slot_set.p', help='path and filename of the slots set')
-parser.add_argument("--disease_symptom", dest="disease_symptom", type=str, default="./../../dialogue_system/data/4_diseases/both/disease_symptom.p", help="path and filename of the disease_symptom file")
+parser.add_argument("--goal_set", dest="goal_set", type=str, default="./../../dialogue_system/data/dataset/label/goal_set.p", help='path and filename of user goal')
+parser.add_argument("--slot_set", dest="slot_set", type=str, default='./../../dialogue_system/data/dataset/label/slot_set.p', help='path and filename of the slots set')
+parser.add_argument("--disease_symptom", dest="disease_symptom", type=str, default="./../../dialogue_system/data/dataset/label/disease_symptom.p", help="path and filename of the disease_symptom file")
 
 
 parser.add_argument("--explicit_number", dest="explicit_number", type=int, default=0, help="the number of explicit symptoms of used sample")
@@ -35,8 +23,8 @@ parser.add_argument("--implicit_number", dest="implicit_number", type=int, defau
 
 parser.add_argument("--batch_size", dest="batch_size",type=int, default=32, help="the batch size for training.")
 parser.add_argument("--hidden_size", dest="hidden_size",type=int, default=40, help="the hidden size of classifier.")
-parser.add_argument("--train_feature", dest="train_feature", type=str, default="ex", help="only use explicit symptom for classification? ex:yes, ex&im:no")
-parser.add_argument("--test_feature", dest="test_feature", type=str, default="ex", help="only use explicit symptom for testing? ex:yes, ex&im:no")
+parser.add_argument("--train_feature", dest="train_feature", type=str, default="ex&im", help="only use explicit symptom for classification? ex:yes, ex&im:no")
+parser.add_argument("--test_feature", dest="test_feature", type=str, default="ex&im", help="only use explicit symptom for testing? ex:yes, ex&im:no")
 parser.add_argument("--checkpoint_path",dest="checkpoint_path", type=str, default="./../model/checkpoint/", help="the folder where models save to, ending with /.")
 parser.add_argument("--saved_model", dest="saved_model", type=str, default="./../model/dqn/checkpoint_d4_agt1_dqn1/model_d4_agent1_dqn1_s0.602_r17.036_t4.326_wd0.0_e214.ckpt")
 parser.add_argument("--learning_rate", dest="learning_rate", type=float, default=0.2,help="the learning rate when training the model.")

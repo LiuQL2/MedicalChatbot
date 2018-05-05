@@ -83,10 +83,11 @@ def run(parameter, main_checkpoint_path):
 
 
 learning_rate_list = [0.001, 0.0001]
+# max_turn_list = [22, 44]
 max_turn_list = [22, 44]
-data_set_list = ["1100"]
-minus_left_slots_list = [1,0]
-reward_for_inform_right_symptom_list = [0.0,-0.5,-0.25]
+data_set_list = ["label"]
+minus_left_slots_list = [0, 1]
+reward_for_inform_right_symptom_list = [-1, -0.5, 0.0]
 
 for data_set in data_set_list:
     data_set_path = "./../data/dataset/" + data_set + "/"
@@ -108,18 +109,18 @@ for data_set in data_set_list:
                                         help="the number of simulate epoch.")
                     parser.add_argument("--epoch_size", dest="epoch_size", type=int, default=100,
                                         help="the size of each simulate epoch.")
-                    parser.add_argument("--evaluate_epoch_number", dest="evaluate_epoch_number", type=int, default=2500,
+                    parser.add_argument("--evaluate_epoch_number", dest="evaluate_epoch_number", type=int, default=1000,
                                         help="the size of each simulate epoch when evaluation.")
                     parser.add_argument("--experience_replay_pool_size", dest="experience_replay_pool_size", type=int,
                                         default=10000, help="the size of experience replay.")
-                    parser.add_argument("--hidden_size_dqn", dest="hidden_size_dqn", type=int, default=300,
+                    parser.add_argument("--hidden_size_dqn", dest="hidden_size_dqn", type=int, default=500,
                                         help="the hidden_size of DQN.")
                     parser.add_argument("--warm_start", dest="warm_start", type=int, default=1,
                                         help="use rule policy to fill the experience replay buffer at the beginning, 1:True; 0:False")
                     parser.add_argument("--warm_start_epoch_number", dest="warm_start_epoch_number", type=int,
                                         default=30,
                                         help="the number of epoch of warm starting.")
-                    parser.add_argument("--batch_size", dest="batch_size", type=int, default=16,
+                    parser.add_argument("--batch_size", dest="batch_size", type=int, default=30,
                                         help="the batch size when training.")
                     parser.add_argument("--log_dir", dest="log_dir", type=str, default=log_dir,
                                         help="directory where event file of training will be written, ending with /")
@@ -166,7 +167,7 @@ for data_set in data_set_list:
                     # TODO: the number condition of explicit symptoms and implicit symptoms in each user goal.
                     parser.add_argument("--explicit_number", dest="explicit_number", type=int, default=0,
                                         help="the number of explicit symptoms of used sample")
-                    parser.add_argument("--implicit_number", dest="implicit_number", type=int, default=1,
+                    parser.add_argument("--implicit_number", dest="implicit_number", type=int, default=0,
                                         help="the number of implicit symptoms of used sample")
 
                     # TODO: agent to use.
@@ -190,7 +191,9 @@ for data_set in data_set_list:
                                         help="path and filename of the disease_symptom file")
                     parser.add_argument("--max_turn", dest="max_turn", type=int, default=max_turn,
                                         help="the max turn in one episode.")
-                    parser.add_argument("--input_size_dqn", dest="input_size_dqn", type=int, default=max_turn + 137,
+                    # parser.add_argument("--input_size_dqn", dest="input_size_dqn", type=int, default=max_turn + 137,
+                    #                     help="the input_size of DQN.")
+                    parser.add_argument("--input_size_dqn", dest="input_size_dqn", type=int, default=max_turn + 357,
                                         help="the input_size of DQN.")
 
                     # TODO: reward for different dialogue status.
@@ -198,7 +201,7 @@ for data_set in data_set_list:
                                         default=-1)
                     parser.add_argument("--reward_for_success", dest="reward_for_success", type=float,
                                         default=2 * max_turn)
-                    parser.add_argument("--reward_for_fail", dest="reward_for_fail", type=float, default=-max_turn)
+                    parser.add_argument("--reward_for_fail", dest="reward_for_fail", type=float, default=-1*max_turn)
                     parser.add_argument("--reward_for_inform_right_symptom", dest="reward_for_inform_right_symptom",
                                         type=float, default=reward_for_inform_right_symptom)
                     parser.add_argument("--minus_left_slots", dest="minus_left_slots", type=int,

@@ -314,9 +314,9 @@ class Finder(object):
 if __name__ == "__main__":
     # goal_set,symptom_set, disease_symptom
     # goal_set_file = './../dialogue_system/data/4_diseases/both/goal_set.p'
-    goal_set_file = './../dialogue_system/data/dataset/1100/goal_set.p'
-    slot_set_file = './../dialogue_system/data/4_diseases/both/slot_set.p'
-    disease_symptom_file = './../dialogue_system/data/4_diseases/both/disease_symptom.p'
+    goal_set_file = './../dialogue_system/data/dataset/label/goal_set.p'
+    slot_set_file = './../dialogue_system/data/dataset/label/slot_set.p'
+    disease_symptom_file = './../dialogue_system/data/dataset/label/disease_symptom.p'
     save_path = "./../dialogue_system/data/found_dataset/"
     goal_set = pickle.load(open(goal_set_file,"rb"))
     slot_set = pickle.load(open(slot_set_file,"rb"))
