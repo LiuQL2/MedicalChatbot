@@ -186,17 +186,18 @@ class RunningSteward(object):
         minus_left_slots = self.parameter.get("minus_left_slots")
         gamma = self.parameter.get("gamma")
         epsilon = self.parameter.get("epsilon")
+        run_id = self.parameter.get('run_id')
 
         if agent_id == 1:
             file_name = "learning_rate_d" + str(disease_number) + "_e" + "_agent" + str(agent_id) + \
                         "_dqn" + str(dqn_id) + "_T" + str(max_turn) + "_lr" + str(lr) + "_RFS" + str(reward_for_success) +\
                           "_RFF" + str(reward_for_fail) + "_RFNCY" + str(reward_for_not_come_yet) + "_RFIRS" + str(reward_for_inform_right_symptom) +\
-                          "_mls" + str(minus_left_slots) + "_gamma" + str(gamma) + "_epsilon" + str(epsilon) + "_" + str(epoch_index) + ".p"
+                          "_mls" + str(minus_left_slots) + "_gamma" + str(gamma) + "_epsilon" + str(epsilon) + "_RID" + str(run_id) + "_" + str(epoch_index) + ".p"
         else:
             file_name = "learning_rate_d" + str(disease_number) + "_e" + "_agent" + str(agent_id) + \
                         "_T" + str(max_turn) + "_lr" + str(lr) + "_RFS" + str(reward_for_success) +\
                           "_RFF" + str(reward_for_fail) + "_RFNCY" + str(reward_for_not_come_yet) + "_RFIRS" + str(reward_for_inform_right_symptom) +\
-                          "_mls" + str(minus_left_slots) + "_gamma" + str(gamma) + "_epsilon" + str(epsilon) + "_" + str(epoch_index) + ".p"
+                          "_mls" + str(minus_left_slots) + "_gamma" + str(gamma) + "_epsilon" + str(epsilon)  + "_RID" + str(run_id) + "_" + str(epoch_index) + ".p"
 
         pickle.dump(file=open(self.parameter.get("performance_save_path") + file_name, "wb"), obj=self.learning_curve)
 
@@ -216,9 +217,10 @@ class RunningSteward(object):
         gamma = self.parameter.get("gamma")
         epsilon = self.parameter.get("epsilon")
         data_set_name = self.parameter.get("goal_set").split("/")[-2]
+        run_id = self.parameter.get('run_id')
         info = "learning_rate_d" + str(disease_number) + "_agent" + str(agent_id) + \
                "_dqn" + str(dqn_id) + "_T" + str(max_turn) + "_lr" + str(lr) + "_RFS" + str(reward_for_success) +\
                           "_RFF" + str(reward_for_fail) + "_RFNCY" + str(reward_for_not_come_yet) + "_RFIRS" + str(reward_for_inform_right_symptom) +\
-                          "_mls" + str(minus_left_slots) + "_gamma" + str(gamma) + "_epsilon" + str(epsilon) + "_data" + str(data_set_name)
+                          "_mls" + str(minus_left_slots) + "_gamma" + str(gamma) + "_epsilon" + str(epsilon)  + "_RID" + str(run_id) + "_data" + str(data_set_name)
 
         print("[INFO]:", info)

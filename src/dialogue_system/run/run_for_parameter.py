@@ -33,18 +33,19 @@ def run(parameter, main_checkpoint_path):
     minus_left_slots = parameter.get("minus_left_slots")
     gamma = parameter.get("gamma")
     epsilon = parameter.get("epsilon")
+    run_id = parameter.get('run_id')
 
 
     if agent_id == 1:
         checkpoint_path = main_checkpoint_path + "checkpoint_d" + str(disease_number) + "_agt" + str(agent_id) + \
                           "_dqn" + str(dqn_id) + "_T" + str(max_turn) + "_lr" + str(lr) + "_RFS" + str(reward_for_success) +\
                           "_RFF" + str(reward_for_fail) + "_RFNCY" + str(reward_for_not_come_yet) + "_RFIRS" + str(reward_for_inform_right_symptom) +\
-                          "_mls" + str(minus_left_slots) + "_gamma" + str(gamma) + "_epsilon" + str(epsilon) + "/"
+                          "_mls" + str(minus_left_slots) + "_gamma" + str(gamma) + "_epsilon" + str(epsilon) + "_RID" + str(run_id) + "/"
     else:
         checkpoint_path = main_checkpoint_path + "checkpoint_d" + str(disease_number) + "_agt" + str(agent_id) + \
                           "_T" + str(max_turn) + "_lr" + str(lr) + "_RFS" + str(reward_for_success) + \
                           "_RFF" + str(reward_for_fail) + "_RFNCY" + str(reward_for_not_come_yet) + "_RFIRS" + str(reward_for_inform_right_symptom) + \
-                          "_mls" + str(minus_left_slots) + "_gamma" + str(gamma) + "_epsilon" + str(epsilon) + "/"
+                          "_mls" + str(minus_left_slots) + "_gamma" + str(gamma) + "_epsilon" + str(epsilon) + "_RID" + str(run_id) + "/"
 
     print(json.dumps(parameter, indent=2))
     time.sleep(8)
@@ -83,11 +84,10 @@ def run(parameter, main_checkpoint_path):
 
 
 learning_rate_list = [0.001, 0.0001]
-# max_turn_list = [22, 44]
-max_turn_list = [22, 44]
-data_set_list = ["label"]
-minus_left_slots_list = [0, 1]
-reward_for_inform_right_symptom_list = [-1, -0.5, 0.0]
+max_turn_list = [22,44]
+data_set_list = ["model_tag"]
+minus_left_slots_list = [0,-1]
+reward_for_inform_right_symptom_list = [-1,-0.5,0]
 
 for data_set in data_set_list:
     data_set_path = "./../data/dataset/" + data_set + "/"
@@ -99,9 +99,9 @@ for data_set in data_set_list:
             for lr in learning_rate_list:
                 for reward_for_inform_right_symptom in reward_for_inform_right_symptom_list:
                     parser = argparse.ArgumentParser()
-                    parser.add_argument("--disease_number", dest="disease_number", type=int, default=4,
+                    parser.add_argument("--disease_number", dest="disease_number", type=int, default=5,
                                         help="the number of disease.")
-                    parser.add_argument("--device_for_tf", dest="device_for_tf", type=str, default="/device:GPU:1",
+                    parser.add_argument("--device_for_tf", dest="device_for_tf", type=str, default="/device:GPU:2",
                                         help="the device for tensorflow running on.")
 
                     # TODO: simulation configuration
@@ -125,7 +125,7 @@ for data_set in data_set_list:
                     parser.add_argument("--log_dir", dest="log_dir", type=str, default=log_dir,
                                         help="directory where event file of training will be written, ending with /")
                     parser.add_argument("--epsilon", dest="epsilon", type=float, default=0.1, help="the greedy of DQN")
-                    parser.add_argument("--gamma", dest="gamma", type=float, default=0.9,
+                    parser.add_argument("--gamma", dest="gamma", type=float, default=1.0,
                                         help="The discount factor of immediate reward.")
                     parser.add_argument("--train_mode", dest="train_mode", type=int, default=1,
                                         help="training mode? True:1 or False:0")
@@ -193,7 +193,7 @@ for data_set in data_set_list:
                                         help="the max turn in one episode.")
                     # parser.add_argument("--input_size_dqn", dest="input_size_dqn", type=int, default=max_turn + 137,
                     #                     help="the input_size of DQN.")
-                    parser.add_argument("--input_size_dqn", dest="input_size_dqn", type=int, default=max_turn + 357,
+                    parser.add_argument("--input_size_dqn", dest="input_size_dqn", type=int, default=max_turn + 382,
                                         help="the input_size of DQN.")
 
                     # TODO: reward for different dialogue status.
@@ -207,6 +207,7 @@ for data_set in data_set_list:
                     parser.add_argument("--minus_left_slots", dest="minus_left_slots", type=int,
                                         default=minus_left_slots,
                                         help="Reward for success minus left slots? 1:Yes, 0:No")
+                    parser.add_argument("--run_id", dest='run_id',type=int, default=10,help='the id of this running.')
 
                     args = parser.parse_args()
                     parameter = vars(args)

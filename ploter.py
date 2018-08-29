@@ -23,7 +23,7 @@ class Ploter(object):
             self.average_wrong_disease.append(self.performance[epoch_index]["average_wrong_disease"])
 
     def plot(self, save_name):
-        size = 1000
+        size = 1499
         plt.plot(self.epoch_index[0:size],self.success_rate[0:size], label="DQN Agent", linewidth=1)
         plt.xlabel("Simulation Epoch")
         plt.ylabel("Success Rate")
@@ -33,7 +33,7 @@ class Ploter(object):
         plt.grid(True)
         # plt.legend(loc="lower right")
         plt.legend(loc='center right')
-        plt.savefig(save_name,dpi=400)
+        # plt.savefig(save_name,dpi=400)
 
         plt.show()
 
@@ -41,7 +41,7 @@ class Ploter(object):
 if __name__ == "__main__":
     file_name = "./src/dialogue_system/model/dqn/learning_rate/learning_rate_d4_e999_agent1_dqn1.p"
     file_name = "./src/dialogue_system/data/dataset/label/result/learning_rate/learning_rate_d4_e_agent1_dqn1_T22_lr0.001_RFS44_RFF-22_RFNCY-1_RFIRS-1_mls0_gamma1.0_epsilon0.1_1499.p"
-    file_name = '/Users/qianlong/Desktop/learning_rate_d4_e_agent1_dqn1_T22_lr0.001_RFS44_RFF-22_RFNCY-1_RFIRS-1_mls0_gamma1.0_epsilon0.1_1499.p'
+    file_name = '/Users/qianlong/Desktop/acl/learning_rate_d4_e_agent1_dqn1_T22_lr0.001_RFS44_RFF-22_RFNCY-1_RFIRS-1_mls0_gamma1.0_epsilon0.1_RID8_1499.p'
     save_name = file_name + ".png"
     ploter = Ploter(file_name)
     ploter.plot(save_name)

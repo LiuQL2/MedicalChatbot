@@ -40,11 +40,14 @@ parser.add_argument("--train_mode", dest="train_mode", type=int, default=1, help
 # TODO: Save model, performance and dialogue content ? And what is the path if yes?
 parser.add_argument("--save_performance",dest="save_performance", type=int, default=0, help="save the performance? 1:Yes, 0:No")
 parser.add_argument("--performance_save_path",dest="performance_save_path", type=str, default="./../model/dqn/learning_rate04/", help="the folder where learning rate save to, ending with /.")
-parser.add_argument("--save_model", dest="save_model", type=int, default=0,help="save model? 1:Yes,0:No")
+parser.add_argument("--save_model", dest="save_model", type=int, default=1,help="save model? 1:Yes,0:No")
 parser.add_argument("--checkpoint_path",dest="checkpoint_path", type=str, default="./../model/dqn/checkpoint/", help="the folder where models save to, ending with /.")
 parser.add_argument("--saved_model", dest="saved_model", type=str, default="./../model/dqn/checkpoint/checkpoint_d4_agt1_dqn1/model_d4_agent1_dqn1_s0.619_r18.221_t4.266_wd0.0_e432.ckpt")
 parser.add_argument("--dialogue_file", dest="dialogue_file", type=str, default="./../data/dialogue_output/dialogue_file.txt", help="the file that used to save dialogue content.")
 parser.add_argument("--save_dialogue", dest="save_dialogue", type=int, default=0, help="save the dialogue? 1:Yes, 0:No")
+
+
+parser.add_argument("--run_id", dest='run_id', type=int, default=1, help='the id of this running.')
 
 # TODO: user configuration.
 parser.add_argument("--allow_wrong_disease", dest="allow_wrong_disease", type=int, default=0, help="Allow the agent to inform wrong disease? 1:Yes, 0:No")
