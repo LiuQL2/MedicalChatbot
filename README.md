@@ -5,15 +5,15 @@ Both the symptoms and the diseases are treated as slots as in the conventional d
 There is only one agent in the dialogue system, who is in charge of both symptom selection and disease prediction.
 
 Please use the following command to see how to use this code:
-'''
+```
 python src/run/run.py --help
-'''
+```
 
 # Data
 Our [dataset](http://www.sdspeople.fudan.edu.cn/zywei/data/acl2018-mds.zip) is available at the homepage of [Prof. Wei](http://www.sdspeople.fudan.edu.cn/zywei/).
 
 # Cite
-'''
+```
 @inproceedings{wei2018task,
   title={Task-oriented Dialogue System for Automatic Diagnosis},
   author={Wei, Zhongyu and Liu, Qianlong and Peng, Baolin and Tou, Huaixiao and Chen, Ting and Huang, Xuanjing and Wong, Kam-Fai and Dai, Xiangying},
@@ -22,4 +22,4 @@ Our [dataset](http://www.sdspeople.fudan.edu.cn/zywei/data/acl2018-mds.zip) is a
   pages={201--207},
   year={2018}
 }
-'''
+```
