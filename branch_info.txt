@@ -1,1 +1,1 @@
-[2018-01-17]:The User simulator in this branch was written by reference to an User for moive tiketing dialogue system, which may be not suitable for diseases identification in medical domain.
+[2018-01-17]: The User simulator of this branch was written specifically for diseases identification. This User simulator is still under working and it's performance is still unknown.

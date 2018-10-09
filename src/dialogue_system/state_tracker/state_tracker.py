@@ -15,7 +15,6 @@ class StateTracker(object):
     def __init__(self, user, agent,parameter):
         self.user = user
         self.agent = agent
-        self.max_turn = parameter["max_turn"]
         self._init()
 
     def get_state(self):
@@ -23,17 +22,18 @@ class StateTracker(object):
 
     def state_updater(self, user_action=None, agent_action=None):
         assert (user_action is None or agent_action is None), "user action and agent action cannot be None at the same time."
+        self.state["turn"] = self.turn
         if user_action is not None:
             self._state_update_with_user_acion(user_action=user_action)
         elif agent_action is not None:
             self._state_update_with_agent_action(agent_action=agent_action)
+        self.turn += 1
 
     def initialize(self):
         self._init()
 
     def _init(self):
-        self.dialogue_status = dialogue_configuration.NOT_COME_YET
-        self.turn = 1
+        self.turn = 0
         self.state = {
             "agent_action":None,
             "user_action":None,
@@ -44,7 +44,8 @@ class StateTracker(object):
                 "inform_slots":{},
                 "explicit_inform_slots":{},
                 "implicit_inform_slots":{},
-                "proposed_slots":{}
+                "proposed_slots":{},
+                "wrong_diseases":[]
             },
             "history":[]
         }
@@ -58,12 +59,16 @@ class StateTracker(object):
         temp_action = copy.deepcopy(user_action)
         temp_action["current_slots"] = copy.deepcopy(self.state["current_slots"])# Save current_slots for every turn.
         self.state["history"].append(temp_action)
-        self.turn += 1
         for slot in user_action["request_slots"].keys():
             self.state["current_slots"]["user_request_slots"][slot] = user_action["request_slots"][slot]
 
         # Inform_slots.
-        for slot in user_action["inform_slots"].keys():
+        inform_slots = list(user_action["inform_slots"].keys())
+        if "disease" in inform_slots and user_action["action"] == "deny":
+            if user_action["inform_slots"]["disease"] not in self.state["current_slots"]["wrong_diseases"]:
+                self.state["current_slots"]["wrong_diseases"].append(user_action["inform_slots"]["disease"])
+        if "disease" in inform_slots: inform_slots.remove("disease")
+        for slot in inform_slots:
             if slot in self.user.goal["goal"]["request_slots"].keys():
                 self.state["current_slots"]["proposed_slots"][slot] = user_action["inform_slots"][slot]
             else:
@@ -73,7 +78,12 @@ class StateTracker(object):
 
         # TODO (Qianlong): explicit_inform_slots and implicit_inform_slots are handled differently.
         # Explicit_inform_slots.
-        for slot in user_action["explicit_inform_slots"].keys():
+        explicit_inform_slots = list(user_action["explicit_inform_slots"].keys())
+        if "disease" in explicit_inform_slots and user_action["action"] == "deny":
+            if user_action["inform_slots"]["disease"] not in self.state["current_slots"]["wrong_diseases"]:
+                self.state["current_slots"]["wrong_diseases"].append(user_action["explicit_inform_slots"]["disease"])
+        if "disease" in explicit_inform_slots: explicit_inform_slots.remove("disease")
+        for slot in explicit_inform_slots:
             if slot in self.user.goal["goal"]["request_slots"].keys():
                 self.state["current_slots"]["proposed_slots"][slot] = user_action["explicit_inform_slots"][slot]
             else:
@@ -81,7 +91,12 @@ class StateTracker(object):
             if slot in self.state["current_slots"]["agent_request_slots"].keys():
                 self.state["current_slots"]["agent_request_slots"].pop(slot)
         # Implicit_inform_slots.
-        for slot in user_action["implicit_inform_slots"].keys():
+        implicit_inform_slots = list(user_action["implicit_inform_slots"].keys())
+        if "disease" in implicit_inform_slots and user_action["action"] == "deny":
+            if user_action["inform_slots"]["disease"] not in self.state["current_slots"]["wrong_diseases"]:
+                self.state["current_slots"]["wrong_diseases"].append(user_action["implicit_inform_slots"]["disease"])
+        if "disease" in implicit_inform_slots: implicit_inform_slots.remove("disease")
+        for slot in implicit_inform_slots:
             if slot in self.user.goal["goal"]["request_slots"].keys():
                 self.state["current_slots"]["proposed_slots"][slot] = user_action["implicit_inform_slots"][slot]
             else:
@@ -99,7 +114,6 @@ class StateTracker(object):
         temp_action = copy.deepcopy(agent_action)
         temp_action["current_slots"] = copy.deepcopy(self.state["current_slots"])# save current_slots for every turn.
         self.state["history"].append(temp_action)
-        self.turn += 1
         # import json
         # print(json.dumps(agent_action, indent=2))
         for slot in agent_action["request_slots"].keys():

@@ -15,11 +15,10 @@ class AgentRandom(Agent):
         super(AgentRandom, self).__init__(action_set=action_set, slot_set=slot_set,disease_symptom=disease_symptom,parameter=parameter)
         self.max_turn = parameter["max_turn"]
 
-    def next(self, state,turn):
+    def next(self, state,turn,greedy_strategy):
         self.agent_action["turn"] = turn
-        action = random.choice(self.action_set.keys())
-        agent_action = {
-            "action":action,
-            "speaker":"agent"
-        }
-        return agent_action
+        action_index = random.randint(0, len(self.action_sapce)-1)
+        agent_action = self.action_sapce[action_index]
+        agent_action["turn"] = turn
+        agent_action["speaker"] = "agent"
+        return agent_action, action_index
