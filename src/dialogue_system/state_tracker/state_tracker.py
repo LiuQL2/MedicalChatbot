@@ -5,7 +5,7 @@ State tracker of the dialogue system, which tracks the state of the dialogue dur
 
 import sys, os
 import copy
-import json
+import copy
 sys.path.append(os.getcwd().replace("src/dialogue_system/state_tracker", ""))
 
 from src.dialogue_system import dialogue_configuration
@@ -18,7 +18,7 @@ class StateTracker(object):
         self._init()
 
     def get_state(self):
-        return self.state
+        return copy.deepcopy(self.state)
 
     def state_updater(self, user_action=None, agent_action=None):
         assert (user_action is None or agent_action is None), "user action and agent action cannot be None at the same time."
