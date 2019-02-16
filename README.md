@@ -4,15 +4,17 @@ A Medical-domain Dialogue System for Diseases Identification.
 Both the symptoms and the diseases are treated as slots as in the conventional dialogue systems.
 There is only one agent in the dialogue system, who is in charge of both symptom selection and disease prediction.
 
+# Data
+Our [dataset](http://www.sdspeople.fudan.edu.cn/zywei/data/acl2018-mds.zip) is available at the homepage of [Prof. Wei](http://www.sdspeople.fudan.edu.cn/zywei/). Please read the README.txt in the zip file and our paper for the details about our dataset.
+
 # How to use
-Please use the following command to see how to use this code, i.e., the meaning of each parameter in the code.
+1. Downloading our [dataset](http://www.sdspeople.fudan.edu.cn/zywei/data/acl2018-mds.zip).
+2. Putting the dataset in a directory and pointing the path of the dataset in src/dialogue_system/run/run.py
+3. Using the following command to see how to run this code, i.e., each parameter in the code.
 ```
 cd src/dialogue_system/run
 python run.py --help
 ```
-
-# Data
-Our [dataset](http://www.sdspeople.fudan.edu.cn/zywei/data/acl2018-mds.zip) is available at the homepage of [Prof. Wei](http://www.sdspeople.fudan.edu.cn/zywei/). Please read the README.txt in the zip file and our paper for the details about our dataset.
 
 # Cite
 ```

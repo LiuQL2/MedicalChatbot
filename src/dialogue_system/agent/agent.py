@@ -259,14 +259,14 @@ class Agent(object):
             {'action': dialogue_configuration.THANKS, 'inform_slots': {}, 'request_slots': {}, "explicit_inform_slots": {}, "implicit_inform_slots": {}}
         ]
         #   Adding the inform actions and request actions.
-        for slot in self.slot_set.keys():
+        for slot in sorted(self.slot_set.keys()):
             feasible_actions.append({'action': 'request', 'inform_slots': {}, 'request_slots': {slot: dialogue_configuration.VALUE_UNKNOWN},"explicit_inform_slots":{}, "implicit_inform_slots":{}})
             if slot != "disease":
                 feasible_actions.append({'action': 'inform', 'inform_slots': {slot: True}, 'request_slots': {}, "explicit_inform_slots":{}, "implicit_inform_slots":{}})
 
 
         # Diseases as actions.
-        for disease in self.disease_symptom.keys():
+        for disease in sorted(self.disease_symptom.keys()):
             feasible_actions.append({'action': 'inform', 'inform_slots': {"disease":disease}, 'request_slots': {},"explicit_inform_slots":{}, "implicit_inform_slots":{}})
 
         return feasible_actions
