@@ -5,7 +5,7 @@ Both the symptoms and the diseases are treated as slots as in the conventional d
 There is only one agent in the dialogue system, who is in charge of both symptom selection and disease prediction.
 
 # Data
-Our [dataset](http://www.sdspeople.fudan.edu.cn/zywei/data/acl2018-mds.zip) is available at the homepage of [Prof. Wei](http://www.sdspeople.fudan.edu.cn/zywei/). Please read the README.txt in the zip file and our paper for the details about our dataset.
+Our dataset is available [here](https://github.com/LiuQL2/MedicalChatbot/blob/develop/acl2018-mds.zip) or can be found at the homepage of [Prof. Wei](http://www.sdspeople.fudan.edu.cn/zywei/). Please read the README.txt in the zip file and our paper for the details about our dataset.
 
 # How to use
 1. Downloading our [dataset](http://www.sdspeople.fudan.edu.cn/zywei/data/acl2018-mds.zip).
